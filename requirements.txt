@@ -1,3 +1,6 @@
+spacy
+spacy_readability
+pytextrank
 gensim
 networkx
 pandas
