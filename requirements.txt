@@ -1,0 +1,6 @@
+gensim
+networkx
+pandas
+nltk
+sklearn
+numpy
