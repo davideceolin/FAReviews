@@ -1,0 +1,6 @@
+*.swp *~
+AMAZON_FASHION_5.json.gz
+FAReviews_prods.pkl
+FAReviews_reviews.csv
+GoogleNews-vectors-negative300.bin.gz
+
