@@ -1,13 +1,17 @@
 To run the experiment, first:
 
-Download data
-
-```bash
-wget -c "https://s3.amazonaws.com/dl4j-distribution/GoogleNews-vectors-negative300.bin.gz"
-```
-
-Install Python 3 (if needed) required Python 3 packages:
+Install required Python 3 packages:
 
 ```bash
 pip3 install -r requirements.txt
 ```
+
+
+Download data (todo: download nltk stopwords)
+
+```bash
+wget -c "https://s3.amazonaws.com/dl4j-distribution/GoogleNews-vectors-negative300.bin.gz"
+wget -c "http://deepyeti.ucsd.edu/jianmo/amazon/categoryFilesSmall/AMAZON_FASHION_5.json.gz"
+python -m spacy download en_core_web_md
+```
+
