@@ -19,3 +19,8 @@ Perform feature extraction (this creates FAReviews\_reviews.csv and FAReviews\_p
 ```bash
 python3 compute_scores.py 
 ```
+
+Create the matrix with distance metrics: (FAReviews\_5\_prods\_mc.pkl)
+```bash
+python3 create_graph.py 
+```
