@@ -1,4 +1,4 @@
-To run the experiment, first:
+**Argument Mining
 
 Install required Python 3 packages:
 
@@ -23,4 +23,12 @@ python3 compute_scores.py
 Create the matrix with distance metrics: (FAReviews\_5\_prods\_mc.pkl)
 ```bash
 python3 create_graph.py 
+```
+**Argument Reasoning
+
+Download the ```argue``` folder, then run the following code:
+```
+cd argue
+swipl server.pl
+?- server(3333).
 ```
