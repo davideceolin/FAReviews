@@ -12,11 +12,26 @@ import os
 nlp = spacy.load('en_core_web_md')
 #neuralcoref.add_to_pipe(nlp)
 
-tr = pytextrank.TextRank()
-nlp.add_pipe(tr.PipelineComponent, name="textrank")
+#tr = pytextrank.TextRank()
+#nlp.add_pipe(tr.PipelineComponent, name="textrank")
+from spacy.language import Language
+#@Language.component("textrank")
+#def textrank(doc):
+#    tr = pytextrank.TextRank()
+#    doc = tr.PipelineComponent(doc)
+#    nlp.add_pipe("textrank")
+#    doc = nlp(text)
+#    return doc
 
-read = Readability()
-nlp.add_pipe(read, last=True)
+@Language.component("readability")
+def readability(doc):
+    read = Readability()
+    doc = read(doc)
+    return doc
+
+
+nlp.add_pipe("textrank", last=True)
+nlp.add_pipe("readability", last=True)
 
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
@@ -51,7 +66,7 @@ def get_readability():
      #       pass
      #   df.at[index, 'readability'] = d
 
-    df['readability'] = pd.read_csv("AMAZON_FASHION_5_readability.csv")['Flesh Kincaid Reading Ease']
+    df['readability'] = pd.read_csv("AMAZON_FASHION_5_readability.csv")['Automated Readability Index']
 
 #get_readability()
 # get review entities
@@ -103,6 +118,7 @@ def get_ranks():
 
 
 files = [dirpath+"/"+file for dirpath, dirnames, filename in os.walk("..") for file in filename if file.endswith("_5.json.gz")]
+#files = ["workers_data_merged.csv"]
 for file in files:
     print(file)
     df = get_df(file)
@@ -112,12 +128,12 @@ for file in files:
     df['ranks'] = ''
     df['readability'] = ''
     index = 0
-    for doc in nlp.pipe(df['reviewText'], batch_size=1000, n_process=32):
+    for doc in nlp.pipe(df['reviewText']):
         try:
-            print("Unexpected error:", sys.exc_info()[0])
             df.at[index, 'ranks'] = [(x.text, x.rank) for x in doc._.phrases]
-            df.at[index, 'readability'] = doc._.flesch_kincaid_reading_ease
+            df.at[index, 'readability'] = doc._.automated_readability_index  #forcast #flesch_kincaid_reading_ease #flesch_kinkaid_grade_level # dale_chall #coleman_liau_index _smog automated_readability_index
         except:
+            print("Unexpected error:", sys.exc_info()[0])
             df.at[index, 'ranks'] = []
             df.at[index, 'readability'] = 0
         index += 1
@@ -137,8 +153,11 @@ for file in files:
     #df_prods['nodes'] = [[] for x in df['asin'].unique()]
     df_prods.to_pickle(file.split("/")[1].split(".")[0]+"_prods.pkl", compression="gzip")
     df.to_csv(file.split("/")[1].split(".")[0]+"_reviews.csv",compression="gzip")
+    df_prods.to_pickle("1_prods.pkl", compression="gzip")
+    df.to_csv("1_reviews.csv", compression="gzip")
 
-#get_ranks()
+
+#get_ranks
 
 #df.to_csv("reviews.csv")
 #df.to_pickle("df.pkl")

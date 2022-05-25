@@ -23,10 +23,10 @@ import numpy as np
 
 # pickle_off = open("prods_mc.pkl", "rb")
 # df_prods = pickle.load(pickle_off)
-df_prods = pd.read_pickle("AMAZON_FASHION_5_prods_mc.pkl")
+df_prods = pd.read_pickle("1_prods_mc.pkl")
 # df_prods = df_prods.drop(columns=['nodes'])
 # df_prods.to_pickle("prods_mc.pkl")
-df = pd.read_csv("AMAZON_FASHION_5_reviews.csv", compression='gzip')
+df = pd.read_csv("1_reviews.csv", compression='gzip')
 stop_words = stopwords.words('english')
 
 df['solutions'] = "undec"
@@ -109,7 +109,10 @@ for index, row in df_prods.iterrows():
             tok = " ".join([x for x in token[0].lower().split() if x not in stop_words])
             if tok == "" or tok == " ":
                 continue
-            cluster = row[('matrix', 'clusters')][1][row[('matrix', 'clusters')][0].columns.get_loc(tok)]
+            try:
+                cluster = row[('matrix', 'clusters')][1][row[('matrix', 'clusters')][0].columns.get_loc(tok)]
+            except:
+                cluster = 0
             df_reviews = df_reviews.append(
                 {'reviewID': reviewID, 'score': score, 'token': tok, 'importance': token[1], 'readability': readability,
                  'cluster': cluster}, ignore_index=True)

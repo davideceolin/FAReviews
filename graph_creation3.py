@@ -42,10 +42,18 @@ def get_df(path):
         i += 1
     return pd.DataFrame.from_dict(df, orient='index')
 
+def spl(x):
+    y = x.split("_")
+    if len(y) > 1:
+        return x.split("_")[2]
+    else:
+        return 0
+
 def distances_matrix(prod, df):
     global model
-    k = [x for x in df.loc[df['asin'].str.match(prod), 'ranks']]
+    k = [x for x in df.loc[df['doc_product_asin'].str.match(prod), 'ranks']]
     tokens = [y[0].lower().split() for x in k for y in ast.literal_eval(x)]
+    print(tokens)
     # list(filter(lambda y : y not in stop_words, x)))<---------------------------------------- check
     tokens = list(set([" ".join(filter(lambda y : y not in stop_words, x)) for x in tokens]))
     # tokens = list(set([" ".join(x) for x in tokens]))
@@ -60,7 +68,7 @@ def distances_matrix(prod, df):
     return df_matrix
 
 
-def clusters(prod, df_matrix, df):
+def clusters(prod, df_matrix, df, k=-1):
     try:
         df_matrix = df_matrix.values[0]
     except Exception as e:
@@ -70,14 +78,6 @@ def clusters(prod, df_matrix, df):
         if len(df_matrix) == 2:
             print(df_matrix)
         df_matrix = pd.DataFrame()
-    '''try:
-        k = [x for x in df.loc[df['asin'].str.contains(prod), 'ranks']]
-        tokens = [y[0].lower().split() for x in k for y in ast.literal_eval(x)]
-        tokens = list(set([" ".join(list(filter(lambda y: y not in stop_words, x))) for x in tokens]))
-    except:
-        print("error")
-        tokens = []
-    '''
     silhouettes = []
     if not df_matrix.empty:
         l = min(len(df_matrix.index), 10)
@@ -90,7 +90,14 @@ def clusters(prod, df_matrix, df):
                 silhouette_avg = 0
             silhouettes.append(silhouette_avg)
         try:
-            optimal_clusters = silhouettes.index(max(silhouettes))
+            if k>-1:
+                optimal_clusters = k
+            else:
+                optimal_clusters = silhouettes.index(max(silhouettes))
+            print("silhouettes:")
+            print(silhouettes)
+            print("optimal clusters:")
+            print(optimal_clusters)
             cluster = KMeans(n_clusters=optimal_clusters + 1, random_state=10)
             cluster_labels = cluster.fit_predict(df_matrix)
         except:
@@ -99,12 +106,15 @@ def clusters(prod, df_matrix, df):
         cluster_labels = []
     return cluster_labels
 
-def get_matrix_and_clusters(prod, df):
+def get_matrix_and_clusters(prod, df, k=-1):
     global model
     k = [x for x in df.loc[df['asin'].str.match(prod), 'ranks']]
     tokens = [y[0].lower().split() for x in k for y in ast.literal_eval(x)]
+    print(tokens)
     tokens = list(set([" ".join(filter(lambda y : y not in stop_words, x)) for x in tokens]))
+    print(tokens)
     tokens = [x for x in tokens if x != "" and x != " "]
+    print(tokens)
     df_matrix = pd.DataFrame(index=tokens, columns=tokens)
     for x in range(len(tokens)):
         for y in range(len(tokens)):
@@ -124,8 +134,15 @@ def get_matrix_and_clusters(prod, df):
                 silhouette_avg = 0
             silhouettes.append(silhouette_avg)
         try:
-            optimal_clusters = silhouettes.index(max(silhouettes))
+            if k==-1 :
+                optimal_clusters = 1
+            else:
+                optimal_clusters = silhouettes.index(max(silhouettes))
             cluster = KMeans(n_clusters=optimal_clusters + 1, random_state=10)
+            print("Silhouettes:")
+            print(silhouettes)
+            print("Optimal clusters:")
+            print(optimal_clusters)
             cluster_labels = cluster.fit_predict(df_matrix)
         except:
             cluster_labels = []
@@ -137,7 +154,7 @@ def add_features(df, ncores, df_reviews):
     psutil.Process().cpu_affinity([ncores])
     print(ncores)
     #matrix = df['prod'].apply(lambda x: distances_matrix(x, df_reviews))
-    df['matrix','clusters'] = df['prod'].apply(lambda x: get_matrix_and_clusters(x, df_reviews))  #df['prod'].apply(lambda x: distances_matrix(x, df_reviews))
+    df['matrix','clusters'] = df['prod'].apply(lambda x: get_matrix_and_clusters(x, df_reviews, k=-1))  #df['prod'].apply(lambda x: distances_matrix(x, df_reviews))
     print(df)
     #if matrix.empty:
     #    df['clusters'] = []
@@ -166,14 +183,15 @@ if __name__ == '__main__':
     model = gensim.models.KeyedVectors.load_word2vec_format('GoogleNews-vectors-negative300.bin.gz', binary=True)
     model.init_sims(replace=True)
 
+    #files = ["workers_data_merged.csv"]
     files = [dirpath+"/"+file for dirpath, dirnames, filename in os.walk(".") for file in filename if file.endswith("_5_reviews.csv")]
 
     for file in files:
-        df = get_df(file.replace("_5_reviews.csv", "_5.json.gz"))
-        df_reviews = pd.read_csv(file, compression="gzip")
-        file_prods = file.replace("_5_reviews.csv", "_5_prods.pkl")
-        df_prods = pd.read_pickle(file_prods, compression="gzip")
+        df = pd.read_csv(file, compression="gzip")
+        df_reviews = pd.read_csv("1_reviews.csv", compression="gzip")
+        df_prods = pd.read_pickle("1_prods.pkl", compression="gzip")
         add_features_df = partial(add_features, df_reviews=df_reviews)
+        pd.set_option('display.max_columns', 500)
         df_prods = parallelize_dataframe(df_prods, func=add_features_df, n_cores=num_cpus)
-        df_prods.to_pickle(file_prods.replace("_5_prods.pkl", "_5_prods_mc.pkl"))
+        df_prods.to_pickle("1_prods_mc.pkl")
         print("DONE")

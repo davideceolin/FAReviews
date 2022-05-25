@@ -23,10 +23,10 @@ import numpy as np
 
 # pickle_off = open("prods_mc.pkl", "rb")
 # df_prods = pickle.load(pickle_off)
-df_prods = pd.read_pickle("AMAZON_FASHION_5_prods_mc.pkl")
+df_prods = pd.read_pickle("1_prods_mc.pkl")
 # df_prods = df_prods.drop(columns=['nodes'])
 # df_prods.to_pickle("prods_mc.pkl")
-df = pd.read_csv("AMAZON_FASHION_5_reviews.csv", compression='gzip')
+df = pd.read_csv("1_reviews.csv", compression='gzip')
 stop_words = stopwords.words('english')
 
 df['solutions'] = "undec"
@@ -49,10 +49,11 @@ def draw_graph(G, model):
 
     #M = G.number_of_edges()
     edge_colors = np.argsort([x[2]['weight'] for x in G.edges.data()]) # range(2, M + 2)
-    sol = [df.loc[(df['asin'] == x[0].split("_")[0]) & (df['reviewerID'] == x[0].split("_")[1]),'solutions'].apply(color_node).values.tolist() for x in G.nodes.data()]
+    sol = [df.loc[(df['doc_product_asin'] == x[0].split("_")[0]) & (df['doc_reviewer_id'] == x[0].split("_")[1]),'solutions'].apply(color_node).values.tolist() for x in G.nodes.data()]
+    sol = [y for y in sol if len(y)>0]
     sol = [y[0] for y in sol]
     print(sol)
-    nodes = nx.draw_networkx_nodes(G, pos, node_size=node_sizes, node_color=sol)
+    nodes = nx.draw_networkx_nodes(G, pos, node_size=node_sizes)#, node_color=sol)
     edges = nx.draw_networkx_edges(G, pos, node_size=node_sizes, arrowstyle='->',
                                    arrowsize=10, edge_color=edge_colors,
                                    edge_cmap=plt.cm.Blues, width=2)
@@ -100,16 +101,21 @@ for index, row in df_prods.iterrows():
     # indexes = [i for i, x in enumerate(row['clusters']) if x == cluster]
     # tok = " ".join([filter(lambda y: y not in stop_words, x) for x in z.lower().split() for z in row['matrix']
     # .columns[indexes]])
-    for id, review in df.loc[df['asin'] == row['prod']].iterrows():
+    for id, review in df.loc[df['doc_product_asin'] == row['prod']].iterrows():
         ranks = ast.literal_eval(review['ranks'])
         readability = review['readability']
-        score = review['overall']
-        reviewID = review['asin'] + "_" + review['reviewerID'] + "_" + str(review['unixReviewTime'])
+        score = review['doc_overall-truthfulness_value']
+        print(review['doc_reviewer_id'])
+        reviewID = review['doc_product_asin'] + "_" + str(review['doc_reviewer_id']) + "_" + str(review['doc_review_time_unix'])
         for token in ranks:
             tok = " ".join([x for x in token[0].lower().split() if x not in stop_words])
             if tok == "" or tok == " ":
                 continue
-            cluster = row[('matrix', 'clusters')][1][row[('matrix', 'clusters')][0].columns.get_loc(tok)]
+            try:
+                cluster = row[('matrix', 'clusters')][1][row[('matrix', 'clusters')][0].columns.get_loc(tok)]
+            except:
+                cluster = 0
+                print(row[('matrix','clusters')])
             df_reviews = df_reviews.append(
                 {'reviewID': reviewID, 'score': score, 'token': tok, 'importance': token[1], 'readability': readability,
                  'cluster': cluster}, ignore_index=True)
@@ -199,8 +205,8 @@ for index, row in df_prods.iterrows():
                 #print(str(res))
                 res = json.loads(str(res).replace("\'", "\""))
                 prodID = res['args'][0].split("_")[0].upper()
-                reviewerID = res['args'][0].split("_")[1].upper()
-                df.loc[(df['asin'] >= prodID) & (df['reviewerID'] <= reviewerID)] = res['args'][1]
+                doc_reviewer_id = res['args'][0].split("_")[1].upper()
+                df.loc[(df['asin'] >= prodID) & (df['doc_reviewer_id'] <= doc_reviewer_id)] = res['args'][1]
             print('{}'.format(p[Model.name]))
     except:
         print(sys.exc_info())
@@ -214,13 +220,13 @@ for index, row in df_prods.iterrows():
         for i in range(len(models)):
             for node in models[i]['nodes']:
                 if node['state'] == 'in':
-                    prodID, reviewerID, time = node['id'].upper().split("_")
-                    weights[i] = weights[i] + node['weight'] # df.loc[(df['asin'] == prodID) & (df['reviewerID'] == reviewerID), 'readability'].iloc[0]
-                    # print(df.loc[(df['asin'] == prodID) & (df['reviewerID'] == reviewerID), 'readability'])
+                    prodID, doc_reviewer_id, time = node['id'].upper().split("_")
+                    weights[i] = weights[i] + node['weight'] # df.loc[(df['asin'] == prodID) & (df['doc_reviewer_id'] == doc_reviewer_id), 'readability'].iloc[0]
+                    # print(df.loc[(df['asin'] == prodID) & (df['doc_reviewer_id'] == doc_reviewer_id), 'readability'])
         model = models[weights.index(max(weights))]
         for node in model['nodes']:
-            prodID, reviewerID, time = node['id'].upper().split("_")
-            df.loc[(df['asin'] == prodID) & (df['reviewerID'] == reviewerID),'solutions'] = node['state']
+            prodID, doc_reviewer_id, time = node['id'].upper().split("_")
+            df.loc[(df['doc_product_asin'] == prodID) & (df['doc_reviewer_id'] == doc_reviewer_id),'solutions'] = node['state']
         draw_graph(G, model)
         #df_results.to_pickle("results.pkl")
         #df.to_csv("reviews_res.csv")
