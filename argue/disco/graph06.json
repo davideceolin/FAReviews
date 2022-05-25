@@ -1,0 +1,17 @@
+{
+	"nodes": [
+		{ "data": { "id": "a" }, "position": { "x": 0, "y": 0 } },
+		{ "data": { "id": "b" }, "position": { "x": 500, "y": 0 } },
+		{ "data": { "id": "c" }, "position": { "x": 1000, "y": 0 } },
+		{ "data": { "id": "d" }, "position": { "x": 1000, "y": 500 } },
+		{ "data": { "id": "e" }, "position": { "x": 500, "y": 500 } }
+	],
+
+	"edges": [
+		{ "data": { "id": "ab", "source": "a", "target": "b" } },
+		{ "data": { "id": "bc", "source": "b", "target": "c" } },
+		{ "data": { "id": "cd", "source": "c", "target": "d" } },
+		{ "data": { "id": "de", "source": "d", "target": "e" } },
+		{ "data": { "id": "eb", "source": "e", "target": "b" } }
+	]
+}

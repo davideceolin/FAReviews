@@ -1,0 +1,14 @@
+{
+	"nodes": [
+		{ "data": { "id": "a" }, "position": { "x": 0, "y": 500 } },
+		{ "data": { "id": "b" }, "position": { "x": 50, "y": 0 } },
+		{ "data": { "id": "c" }, "position": { "x": 500, "y": 250 } }
+	],
+
+	"edges": [
+		{ "data": { "id": "ab", "source": "a", "target": "b" } },
+		{ "data": { "id": "ac", "source": "a", "target": "c" } },
+		{ "data": { "id": "ba", "source": "b", "target": "a" } },
+		{ "data": { "id": "bc", "source": "b", "target": "c" } }
+	]
+}

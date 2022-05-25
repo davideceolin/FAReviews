@@ -1,0 +1,24 @@
+{
+	"nodes": [
+		{ "data": { "id": "a" }, "position": { "x": 0, "y": 0 } },
+		{ "data": { "id": "b" }, "position": { "x": 500, "y": 0 } },
+		{ "data": { "id": "c" }, "position": { "x": 1000, "y": 0 } },
+		{ "data": { "id": "d" }, "position": { "x": 1000, "y": 500 } },
+		{ "data": { "id": "e" }, "position": { "x": 1500, "y": 250 } },
+		{ "data": { "id": "f" }, "position": { "x": 2000, "y": 250 } },
+		{ "data": { "id": "g" }, "position": { "x": 0, "y": 500 } },
+		{ "data": { "id": "h" }, "position": { "x": 500, "y": 500 } }
+	],
+
+	"edges": [
+		{ "data": { "id": "ab", "source": "a", "target": "b" } },
+		{ "data": { "id": "bc", "source": "b", "target": "c" } },
+		{ "data": { "id": "ce", "source": "c", "target": "e" } },
+		{ "data": { "id": "de", "source": "d", "target": "e" } },
+		{ "data": { "id": "ef", "source": "e", "target": "f" } },
+		{ "data": { "id": "fe", "source": "f", "target": "e" } },
+		{ "data": { "id": "gh", "source": "g", "target": "h" } },
+		{ "data": { "id": "hb", "source": "h", "target": "b" } },
+		{ "data": { "id": "hg", "source": "h", "target": "g" } }
+	]
+}

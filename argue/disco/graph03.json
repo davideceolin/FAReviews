@@ -1,0 +1,39 @@
+{
+	"nodes": [
+		{ "data": { "id": "a" }, "position": { "x": 0, "y": 250 } },
+		{ "data": { "id": "b1" }, "position": { "x": 500, "y": 0 } },
+		{ "data": { "id": "b2" }, "position": { "x": 1000, "y": 0 } },
+		{ "data": { "id": "b3" }, "position": { "x": 1500, "y": 0 } },
+		{ "data": { "id": "b4" }, "position": { "x": 2000, "y": 0 } },
+		{ "data": { "id": "b5" }, "position": { "x": 2500, "y": 0 } },
+		{ "data": { "id": "c1" }, "position": { "x": 500, "y": 500 } },
+		{ "data": { "id": "c2" }, "position": { "x": 1000, "y": 500 } },
+		{ "data": { "id": "c3" }, "position": { "x": 1500, "y": 500 } },
+		{ "data": { "id": "c4" }, "position": { "x": 2000, "y": 500 } },
+		{ "data": { "id": "c5" }, "position": { "x": 2500, "y": 500 } },
+		{ "data": { "id": "d" }, "position": { "x": 3000, "y": 250 } }
+	],
+
+	"edges": [
+		{ "data": { "id": "db5", "source": "d", "target": "b5" } },
+		{ "data": { "id": "dc5", "source": "d", "target": "c5" } },
+		{ "data": { "id": "b5b4", "source": "b5", "target": "b4" } },
+		{ "data": { "id": "b5c4", "source": "b5", "target": "c4" } },
+		{ "data": { "id": "c5c4", "source": "c5", "target": "c4" } },
+		{ "data": { "id": "c5b4", "source": "c5", "target": "b4" } },
+		{ "data": { "id": "b4b3", "source": "b4", "target": "b3" } },
+		{ "data": { "id": "c4c3", "source": "c4", "target": "c3" } },
+		{ "data": { "id": "b3b2", "source": "b3", "target": "b2" } },
+		{ "data": { "id": "b3c3", "source": "b3", "target": "c3" } },
+		{ "data": { "id": "b3c2", "source": "b3", "target": "c2" } },
+		{ "data": { "id": "c3c2", "source": "c3", "target": "c2" } },
+		{ "data": { "id": "c3b3", "source": "c3", "target": "b3" } },
+		{ "data": { "id": "c3b2", "source": "c3", "target": "b2" } },
+		{ "data": { "id": "b2b1", "source": "b2", "target": "b1" } },
+		{ "data": { "id": "c2c1", "source": "c2", "target": "c1" } },
+		{ "data": { "id": "b1a", "source": "b1", "target": "a" } },
+		{ "data": { "id": "b1c1", "source": "b1", "target": "c1" } },
+		{ "data": { "id": "c11a", "source": "c1", "target": "a" } },
+		{ "data": { "id": "c1b1", "source": "c1", "target": "b1" } }
+	]
+}
