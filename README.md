@@ -1,4 +1,4 @@
-**Argument Mining
+ **Argument Mining
 
 Install required Python 3 packages:
 
