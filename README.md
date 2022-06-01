@@ -17,6 +17,7 @@ python -m spacy download en_core_web_md
 
 Perform feature extraction (this creates FAReviews\_reviews.csv and FAReviews\_prods.pkl)
 ```bash
+# input: AMAZON_FASHION_5_reviews.csv
 python3 compute_scores2.py 
 ```
 
