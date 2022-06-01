@@ -22,6 +22,7 @@ python3 compute_scores2.py
 
 Create the matrix with distance metrics: (FAReviews\_5\_prods\_mc.pkl)
 ```bash
+# requires http://localhost:3333/argue
 python3 graph_creation_2_2.py 
 ```
 **Argument Reasoning
