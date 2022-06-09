@@ -1,4 +1,4 @@
-**Argument Mining
+** Argument Mining
 
 Install required Python 3 packages:
 
@@ -17,12 +17,12 @@ python -m spacy download en_core_web_md
 
 Perform feature extraction (this creates FAReviews\_reviews.csv and FAReviews\_prods.pkl)
 ```bash
-python3 compute_scores.py 
+python3 compute_scores2.py 
 ```
 
 Create the matrix with distance metrics: (FAReviews\_5\_prods\_mc.pkl)
 ```bash
-python3 create_graph.py 
+python3 graph_creation_2_2.py 
 ```
 **Argument Reasoning
 
