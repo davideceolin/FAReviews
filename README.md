@@ -17,13 +17,14 @@ python -m spacy download en_core_web_md
 
 Perform feature extraction (this creates FAReviews\_reviews.csv and FAReviews\_prods.pkl)
 ```bash
-python3 compute_scores2.py 
+python3 compute_scores3.py 
 ```
 
 Create the matrix with distance metrics: (FAReviews\_5\_prods\_mc.pkl)
 ```bash
-python3 graph_creation_2_2.py 
+python3 graph_creation3.py 
 ```
+
 **Argument Reasoning
 
 Download the ```argue``` folder, then run the following code:
@@ -31,4 +32,10 @@ Download the ```argue``` folder, then run the following code:
 cd argue
 swipl server.pl
 ?- server(3333).
+```
+
+Solve the Argumentation Graph
+
+```bash
+python3 graph_creation_3.py 
 ```
