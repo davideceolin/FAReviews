@@ -1,4 +1,4 @@
-** Argument Mining **
+## Argument Mining 
 
 Install required Python 3 packages:
 
@@ -25,7 +25,7 @@ Create the matrix with distance metrics: (FAReviews\_5\_prods\_mc.pkl)
 python3 graph_creation3.py 
 ```
 
-**Argument Reasoning
+## Argument Reasoning
 
 Download the ```argue``` folder, then run the following code:
 ```
