@@ -15,9 +15,13 @@ wget -c "http://deepyeti.ucsd.edu/jianmo/amazon/categoryFilesSmall/AMAZON_FASHIO
 python -m spacy download en_core_web_md
 ```
 
-Perform feature extraction (this creates FAReviews\_reviews.csv and FAReviews\_prods.pkl)
+Perform feature extraction
 ```bash
 python3 compute_scores2.py 
+```
+Creates: 
+```
+1_prods.pkl, 1_reviews.csv
 ```
 
 Create the matrix with distance metrics: (FAReviews\_5\_prods\_mc.pkl)
