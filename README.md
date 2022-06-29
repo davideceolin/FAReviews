@@ -17,7 +17,7 @@ python -m spacy download en_core_web_md
 
 Perform feature extraction (this creates FAReviews\_reviews.csv and FAReviews\_prods.pkl)
 ```bash
-python3 compute_scores3.py 
+python3 compute_scores2.py 
 ```
 
 Create the matrix with distance metrics: (FAReviews\_5\_prods\_mc.pkl)
