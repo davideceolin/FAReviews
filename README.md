@@ -15,18 +15,25 @@ wget -c "http://deepyeti.ucsd.edu/jianmo/amazon/categoryFilesSmall/AMAZON_FASHIO
 python -m spacy download en_core_web_md
 ```
 
-Perform feature extraction
+Perform feature extraction:
 ```bash
 python3 compute_scores2.py 
 ```
 Creates: 
 ```
-1_prods.pkl, 1_reviews.csv
+1_prods.pkl
+1_reviews.csv
 ```
 
-Create the matrix with distance metrics: (FAReviews\_5\_prods\_mc.pkl)
+Create the matrix with distance metrics:
 ```bash
 python3 graph_creation3.py 
+```
+
+Creates:
+
+```
+1_prods_mc.pkl
 ```
 
 ## Argument Reasoning
