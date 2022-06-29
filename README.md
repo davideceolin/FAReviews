@@ -50,3 +50,9 @@ Solve the Argumentation Graph
 ```bash
 python3 graph_creation_3.py 
 ```
+
+Creates:
+```
+reviews_res.csv
+results.pkl
+```
