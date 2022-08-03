@@ -1,13 +1,13 @@
-from sklearn.cluster import AgglomerativeClustering
+# from sklearn.cluster import AgglomerativeClustering
 import gzip
 import json
 import pandas as pd
-import networkx as nx
-from spacy_readability import Readability
-import numpy as np
+# import networkx as nx
+# from spacy_readability import Readability
+# import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from scipy import stats
+# from scipy import stats
 
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
@@ -19,9 +19,9 @@ pd.set_option('display.width', 1000)
 
 
 def parse(path):
-  g = gzip.open(path, 'rb')
-  for l in g:
-    yield json.loads(l)
+    g = gzip.open(path, 'rb')
+    for ll in g:
+        yield json.loads(ll)
 
 
 def get_df(path):
