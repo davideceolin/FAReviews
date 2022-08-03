@@ -7,3 +7,6 @@ pandas
 nltk
 sklearn
 numpy
+gensim
+pengines
+pyemd
