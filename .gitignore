@@ -1,11 +1,20 @@
 *.swp *~
+
+# Input/Output data
 AMAZON_FASHION_5.json.gz
 FAReviews_prods.pkl
 FAReviews_reviews.csv
 GoogleNews-vectors-negative300.bin.gz
-./Tests/*
 1_*
+
+# Folders
+Tests/*
 Data*
 Output*
+
+# Mac
+.DS_Store
+
+# Performance tests
 test_*
 *.lprof
