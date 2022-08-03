@@ -1,26 +1,13 @@
-# from sklearn.cluster import AgglomerativeClustering
 import gzip
 import json
 import pandas as pd
 import spacy
-# import neuralcoref
 from spacy_readability import Readability
 from spacy.language import Language
 import pytextrank  # noqa: F401
 import sys
-# import os
 
 nlp = spacy.load('en_core_web_md')
-# neuralcoref.add_to_pipe(nlp)
-
-# tr = pytextrank.TextRank()
-# nlp.add_pipe(tr.PipelineComponent, name="textrank")
-
-# @Language.component("textrank")
-# def textrank(doc):
-#    tr = pytextrank.TextRank()
-#    doc = tr.PipelineComponent(doc)
-#    return doc
 
 
 @Language.component("readability")
@@ -53,37 +40,19 @@ def get_df(path):
     return pd.DataFrame.from_dict(df, orient='index')
 
 
-# df = get_df('../AMAZON_FASHION_5.json.gz')
-
-
 def get_readability():
     global df
     df['readability'] = ''
-    # for index, review in df.iterrows():
-    #   try:
-    #       doc = nlp(review['reviewText'])
-    #   except:
-    #       pass
-    #   df.at[index, 'readability'] = d
-
     df['readability'] = pd.read_csv(
                                     "AMAZON_FASHION_5_readability.csv"
                                     )['Automated Readability Index']
-
-# get_readability()
-# get review entities
 
 
 def get_entities():
     entities = pd.read_csv("AMAZON_FASHION_5_entities.csv")
     global df
     df['entities'] = entities['entities']
-    # for index, review in df.iterrows():
-    #    df.at[index,'entities'] = entities[entities[review_id == review["reviewerID"]
-    #                                                             +"_"+review["asin"]]]
 
-
-# get_entities()
 
 def get_relevance():
     global df
@@ -95,20 +64,12 @@ def get_relevance():
             pass
         df.at[index, 'coref_clusters'] = doc._.coref_clusters
 
-# get_relevance()
-
-# compute semantic similarity matrix
-
 
 def get_simiarity_matrix(reviews):
     global df
     for index, review in df.iterrows():
         entities = get_entities(reviews)
     return entities
-
-# compute hierarchical clustering
-
-# get entities with importance
 
 
 def spl(x):
@@ -133,10 +94,7 @@ def get_ranks():
 files = ["AMAZON_FASHION_5_reviews.csv"]
 for file in files:
     print(file)
-    # df = pd.read_csv(file,encoding='latin1',keep_default_na=False)
     df = pd.read_csv(file, compression='gzip',  keep_default_na=False)
-    # print(df)
-    # df['doc_review_text'] = df['doc_review_text'].astype('unicode').values
     df['ranks'] = ''
     df['readability'] = ''
     index = 0
@@ -144,8 +102,6 @@ for file in files:
         try:
             df.at[index, 'ranks'] = [(x.text, x.rank) for x in doc._.phrases]
             df.at[index, 'readability'] = doc._.flesch_kincaid_reading_ease
-            # forcast #flesch_kincaid_reading_ease #flesch_kinkaid_grade_level
-            # # dale_chall #coleman_liau_index _smog automated_readability_index
         except Exception:
             print("Unexpected error:", sys.exc_info()[0])
             df.at[index, 'ranks'] = []
@@ -157,21 +113,9 @@ for file in files:
     df_prods.to_pickle("1_prods.pkl", compression="gzip")
     df.to_csv("1_reviews.csv", compression="gzip")
 
-# get_ranks
-
-# df.to_csv("reviews.csv")
-# df.to_pickle("df.pkl")
-# df_prods = pd.DataFrame()
-
 
 class Node:
     def __init__(self, topic, rating, weight):
         self.topic = topic
         self.rating = rating
         self.weight = weight
-
-
-# df_prods.to_pickle("prods.pkl")
-# df_prods.to_csv("prods.csv")
-
-# print(df)
