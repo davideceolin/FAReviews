@@ -198,7 +198,7 @@ for index, row in df_prods.iterrows():
             #     if G.has_edge(token1['reviewID'],token2['reviewID']):
             #         weight = int(G.get_edge_data(token1['reviewID'], token2['reviewID'],
             #                      'weight')['weight'])
-            #     G.add_edge(token1['reviewID'], token2['reviewID'], 
+            #     G.add_edge(token1['reviewID'], token2['reviewID'],
             #                weight= weight + w1 * sim_t1_t2)
             #     if G.has_edge(token1['reviewID'],token2['reviewID']):
             #         weight = int(G.get_edge_data(token1['reviewID'], token2['reviewID'],

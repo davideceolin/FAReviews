@@ -14,7 +14,7 @@ import gensim
 from nltk.corpus import stopwords
 # from nltk import download
 from sklearn.cluster import KMeans
-# from sklearn.metrics import silhouette_samples, 
+# from sklearn.metrics import silhouette_samples
 from sklearn.metrics import silhouette_score
 from numpy import isnan, isinf
 # import sys

@@ -138,8 +138,8 @@ for file in files:
     for doc in nlp.pipe(df['reviewText']):
         try:
             df.at[index, 'ranks'] = [(x.text, x.rank) for x in doc._.phrases]
-            df.at[index, 'readability'] = doc._.automated_readability_index  
-            # forcast #flesch_kincaid_reading_ease #flesch_kinkaid_grade_level 
+            df.at[index, 'readability'] = doc._.automated_readability_index
+            # forcast #flesch_kincaid_reading_ease #flesch_kinkaid_grade_level
             # # dale_chall #coleman_liau_index _smog automated_readability_index
         except Exception:
             print("Unexpected error:", sys.exc_info()[0])

@@ -194,7 +194,7 @@ print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
 df_features['vote'] = df['vote']
 # df_features['weighted_vote'] = df['weight']*df['vote'].apply(lambda x: 0 if x < 5 else 1)
-df_features['cluster'] = df['vote'].apply(lambda x: 0 if x < 5 else 1)  
+df_features['cluster'] = df['vote'].apply(lambda x: 0 if x < 5 else 1)
 # df_features['weighted_vote'].apply(round)
 
 n_train = round(len(df_features)*0.3)
