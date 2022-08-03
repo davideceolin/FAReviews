@@ -7,5 +7,5 @@ GoogleNews-vectors-negative300.bin.gz
 1_*
 Data*
 Output*
-test*
+test_*
 *.lprof
