@@ -48,13 +48,14 @@ def preprocess_parallel(texts, n_jobs, chunksize, batchsize, trt):
     return flatten(result)
 
 
-def compute_scores(file, nc=8, cs=100, bs=20, trt=None):
+def compute_scores(file, nc=8, cs=100, bs=20, trt=0.0):
     start_time = time.time()
     if not os.path.exists(file):
         raise ValueError('Cannot find file:', file)
     else:
         print('Computing scores for', file, 'with nc:', nc, 'cs:', cs, 'bs:', bs, 'trt:', trt)
     df = pd.read_json(file, compression='gzip', lines=True)
+    df['reviewText'] = df['reviewText'].fillna('')
     results = preprocess_parallel(df['reviewText'].astype(str), nc, cs, bs, trt)
     df['ranks'] = [x[0] for x in results]
     df['readability'] = [x[1][0] for x in results]
