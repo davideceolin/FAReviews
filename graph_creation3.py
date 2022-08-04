@@ -25,12 +25,10 @@ def get_matrix_and_clusters(prod, df, k=-1):
     tokens = [x for x in tokens if x != "" and x != " "]
     df_matrix = pd.DataFrame(index=tokens, columns=tokens)
     for x in range(len(tokens)):
-        for y in range(len(tokens)):
-            if tokens[x] == " " or tokens[y] == " ":
-                dist = 100
-            else:
-                dist = model.wmdistance(tokens[x], tokens[y])
-            df_matrix.iat[x, y] = 100 if isinf(dist) else 0 if isnan(dist) else dist
+        for y in range(x+1):
+            dist = model.wmdistance(tokens[x], tokens[y])
+            df_matrix.iat[x, y] = df_matrix.iat[y, x] = (100 if isinf(dist) else 0 if isnan(dist)
+                                                         else dist)
     silhouettes = []
     if not df_matrix.empty:
         for i in range(min(len(df_matrix.index), 10)):
