@@ -29,7 +29,7 @@ def main():
                         help='Chunk size used in compute scores')
     parser.add_argument('-bs', '--batch_size', type=int, default=2000,
                         help='Batch size used in compute scores')
-    parser.add_argument('-trt', '--textrank_treshold',
+    parser.add_argument('-trt', '--textrank_treshold', type=float,
                         help="Minimum textrank score threshold for the tokens to be used. Tokens "
                         "with a textrank score below the threshold are not used.")
     args = parser.parse_args()
@@ -39,15 +39,16 @@ def main():
     if not os.path.exists('Output'):
         os.mkdir("Output")
     if args.file is not None:
-        run_FAReviews(args.file, args.num_cores, args.chunck_size, args.batch_size)
+        run_FAReviews(args.file, args.num_cores, args.chunck_size, args.batch_size,
+                      args.textrank_threshold)
 
     end_time = f"{datetime.now():%Y-%m-%d %H:%M:%S}"
     print('End time:', end_time)
 
 
-def run_FAReviews(infile, nc, cs, bs):
+def run_FAReviews(infile, nc, cs, bs, trt):
     # compute scores
-    prods, reviews = compute_scores(infile, nc, cs, bs)
+    prods, reviews = compute_scores(infile, nc, cs, bs, trt)
     print('Finished computing scores')
     # calculate matrix and clusters
     print('Finished calculating matrix and clusters')

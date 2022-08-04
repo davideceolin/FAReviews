@@ -15,8 +15,8 @@ def readability(doc):
     return doc
 
 
-def apply_ranking(doc):
-    return [(x.text, x.rank) for x in doc._.phrases]
+def apply_ranking(doc, trt):
+    return [(x.text, x.rank) for x in doc._.phrases if x.rank >= trt]
 
 
 def apply_readability(doc):
@@ -33,29 +33,29 @@ def flatten(list_of_lists):
     return [item for sublist in list_of_lists for item in sublist]
 
 
-def process_chunk(texts, bs):
+def process_chunk(texts, bs, trt):
     preproc_pipe = []
     for doc in nlp.pipe(texts, batch_size=bs):
-        preproc_pipe.append([apply_ranking(doc), [apply_readability(doc)]])
+        preproc_pipe.append([apply_ranking(doc, trt), [apply_readability(doc)]])
     return preproc_pipe
 
 
-def preprocess_parallel(texts, n_jobs, chunksize, batchsize):
+def preprocess_parallel(texts, n_jobs, chunksize, batchsize, trt):
     executor = Parallel(n_jobs=n_jobs, backend='multiprocessing', prefer="processes")
     do = delayed(process_chunk)
-    tasks = (do(chunk, batchsize) for chunk in chunker(texts, len(texts), chunksize=chunksize))
+    tasks = (do(chunk, batchsize, trt) for chunk in chunker(texts, len(texts), chunksize=chunksize))
     result = executor(tasks)
     return flatten(result)
 
 
-def compute_scores(file, nc=8, cs=100, bs=20):
+def compute_scores(file, nc=8, cs=100, bs=20, trt=None):
     start_time = time.time()
     if not os.path.exists(file):
         raise ValueError('Cannot find file:', file)
     else:
-        print('Computing scores for', file, 'with nc: ', nc, 'cs: ', cs, 'bs: ', bs)
+        print('Computing scores for', file, 'with nc:', nc, 'cs:', cs, 'bs:', bs, 'trt:', trt)
     df = pd.read_json(file, compression='gzip', lines=True)
-    results = preprocess_parallel(df['reviewText'].astype(str), nc, cs, bs)
+    results = preprocess_parallel(df['reviewText'].astype(str), nc, cs, bs, trt)
     df['ranks'] = [x[0] for x in results]
     df['readability'] = [x[1][0] for x in results]
     df_prods = pd.DataFrame()
@@ -81,4 +81,5 @@ if __name__ == "__main__":
     nc = int(input("Define number of jobs: "))
     cs = int(input("Define number of chunks: "))
     bs = int(input("Define batch size: "))
-    compute_scores(file, nc, cs, bs)
+    trt = int(input("Define threshold for textrank token collection: "))
+    compute_scores(file, nc, cs, bs, trt)
