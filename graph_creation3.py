@@ -4,40 +4,25 @@
 # 3. compute semantic similarity matrix per product!
 # 4. link
 
-# import networkx as nx
-# import duckdb
 import pandas as pd
-# import pickle
-# from time import time
 import gensim
-# import logging
 from nltk.corpus import stopwords
-# from nltk import download
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score  # silhouette_samples
 from numpy import isnan, isinf
-# import sys
 import multiprocessing as mp
 import numpy as np
 from functools import partial
 import ast
 import psutil
-# from tqdm import tqdm
 import os
-import gzip
-import json
-import traceback
 
 
 def get_matrix_and_clusters(prod, df, k=-1):
-    global model
     k = [x for x in df.loc[df['asin'].str.match(prod), 'ranks']]
     tokens = [y[0].lower().split() for x in k for y in ast.literal_eval(x)]
-    print(tokens)
     tokens = list(set([" ".join(filter(lambda y: y not in stop_words, x)) for x in tokens]))
-    print(tokens)
     tokens = [x for x in tokens if x != "" and x != " "]
-    print(tokens)
     df_matrix = pd.DataFrame(index=tokens, columns=tokens)
     for x in range(len(tokens)):
         for y in range(len(tokens)):
@@ -62,10 +47,6 @@ def get_matrix_and_clusters(prod, df, k=-1):
             else:
                 optimal_clusters = silhouettes.index(max(silhouettes))
             cluster = KMeans(n_clusters=optimal_clusters + 1, random_state=10)
-            print("Silhouettes:")
-            print(silhouettes)
-            print("Optimal clusters:")
-            print(optimal_clusters)
             cluster_labels = cluster.fit_predict(df_matrix)
         except Exception:
             cluster_labels = []
@@ -76,41 +57,27 @@ def get_matrix_and_clusters(prod, df, k=-1):
 
 def add_features(df, ncores, df_reviews):
     psutil.Process().cpu_affinity([ncores])
-    print(ncores)
-    # matrix = df['prod'].apply(lambda x: distances_matrix(x, df_reviews))
     df['matrix', 'clusters'] = df['prod'].apply(lambda x: get_matrix_and_clusters(x, df_reviews,
                                                                                   k=-1))
-    # df['prod'].apply(lambda x: distances_matrix(x, df_reviews))
-    print(df)
-    # if matrix.empty:
-    #    df['clusters'] = []
-    # else:
-    #    df['clusters'] = df['prod'].apply(lambda x: clusters(x, matrix, df_reviews))
     return df
 
 
 def parallelize_dataframe(df_to_par, func, n_cores=4):
-    print("started")
     df_split = np.array_split(df_to_par, n_cores)
     pool = mp.Pool(n_cores)
     df_res = pd.concat(pool.starmap(func, zip(df_split, range(n_cores))))
-    print(df_res)
-    print("concatenated")
     pool.close()
     pool.join()
-    print("everything closed")
     return df_res
 
 
 if __name__ == '__main__':
     num_cpus = psutil.cpu_count(logical=False)
     stop_words = stopwords.words('english')
-
     model = gensim.models.KeyedVectors.load_word2vec_format('GoogleNews-vectors-negative300.bin.gz',
                                                             binary=True)
     model.init_sims(replace=True)
 
-    # files = ["workers_data_merged.csv"]
     files = [dirpath+"/"+file for dirpath, dirnames, filename in os.walk(".") for file in filename
              if file.endswith("_5_reviews.csv")]
 
@@ -122,4 +89,3 @@ if __name__ == '__main__':
         pd.set_option('display.max_columns', 500)
         df_prods = parallelize_dataframe(df_prods, func=add_features_df, n_cores=num_cpus)
         df_prods.to_pickle("1_prods_mc.pkl")
-        print("DONE")
