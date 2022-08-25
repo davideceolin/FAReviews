@@ -1,13 +1,15 @@
-import pandas as pd
-import spacy
-from spacy_readability import Readability
-from spacy.language import Language
-import pytextrank  # noqa: F401
-from joblib import Parallel, delayed
-import time
 import os
+import time
+
+import pandas as pd
+import pytextrank  # noqa: F401
+import spacy
+from joblib import Parallel, delayed
+from spacy.language import Language
+from spacy_readability import Readability
 
 
+# Load nlp model
 @Language.component("readability")
 def readability(doc):
     read = Readability()
@@ -15,8 +17,13 @@ def readability(doc):
     return doc
 
 
+nlp = spacy.load('en_core_web_md')
+nlp.add_pipe("textrank", last=True)
+nlp.add_pipe("readability", last=True)
+
+
 def apply_ranking(doc, trt):
-    return [(x.text, x.rank) for x in doc._.phrases if x.rank >= trt]
+    return [(str(x.text), x.rank) for x in doc._.phrases if x.rank >= trt]
 
 
 def apply_readability(doc):
@@ -72,15 +79,10 @@ def compute_scores(file, nc=8, cs=100, bs=20, trt=0.0):
     return df_prods, df
 
 
-nlp = spacy.load('en_core_web_md')
-nlp.add_pipe("textrank", last=True)
-nlp.add_pipe("readability", last=True)
-
-
 if __name__ == "__main__":
     file = str(input("Please provide path to data file: "))
     nc = int(input("Define number of jobs: "))
     cs = int(input("Define number of chunks: "))
     bs = int(input("Define batch size: "))
-    trt = int(input("Define threshold for textrank token collection: "))
+    trt = float(input("Define threshold for textrank token collection: "))
     compute_scores(file, nc, cs, bs, trt)
