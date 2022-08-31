@@ -55,7 +55,7 @@ def preprocess_parallel(texts, n_jobs, chunksize, batchsize, trt):
     return flatten(result)
 
 
-def compute_scores(file, nc=8, cs=100, bs=20, trt=0.0):
+def compute_scores(file, nc=8, cs=100, bs=20, trt=0.0, savename=""):
     start_time = time.time()
     if not os.path.exists(file):
         raise ValueError('Cannot find file:', file)
@@ -70,7 +70,7 @@ def compute_scores(file, nc=8, cs=100, bs=20, trt=0.0):
     df_prods['prod'] = df['asin'].unique()
     try:
         bn = os.path.basename(file)
-        output_path = os.path.join("Output", bn[:bn.index('.')])
+        output_path = os.path.join(savename, bn[:bn.index('.')])
         df_prods.to_pickle(output_path + "_prods.pkl", compression="gzip")
         df.to_csv(output_path + "_reviews.csv", compression="gzip")
     except Exception:

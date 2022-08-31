@@ -98,7 +98,7 @@ if __name__ == '__main__':
     df_prods_mc = run_graph_creation(df_reviews, df_prods, nc)
     try:
         bn = os.path.basename(file)
-        output_path = os.path.join("Output", bn[:bn.index('_reviews.')])
+        output_path = os.path.join("", bn[:bn.index('_reviews.')])
         df_prods_mc.to_pickle(output_path + "_prods_mc.pkl", compression="gzip")
     except Exception:
         print('Failed to save the output of graph_creation')
