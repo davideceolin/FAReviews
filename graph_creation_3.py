@@ -46,11 +46,11 @@ def draw_graph(G, model, df, savename):
     edges = nx.draw_networkx_edges(G, pos, node_size=node_sizes, arrowstyle='->',
                                    arrowsize=10, edge_color=edge_colors,
                                    edge_cmap=plt.cm.Blues, width=2)
+    ax = plt.gca()
+    ax.set_axis_off()
     pc = mpl.collections.PatchCollection(edges, cmap=plt.cm.Blues)
     pc.set_array(edge_colors)
     plt.colorbar(pc)
-    ax = plt.gca()
-    ax.set_axis_off()
     prod_id = list(G.nodes())[0].split("_")[0]
     plt.savefig(os.path.join(savename, prod_id+'.png'), bbox_inches='tight')
     nx.draw_networkx_labels(G, pos, G.nodes, font_size=8)
