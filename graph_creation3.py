@@ -23,7 +23,6 @@ from sklearn.metrics import silhouette_score
 stop_words = stopwords.words('english')
 model = gensim.models.KeyedVectors.load_word2vec_format(
             'GoogleNews-vectors-negative300.bin.gz', binary=True)
-model.init_sims(replace=True)
 
 
 def get_matrix_and_clusters(prod, df, k=-1):
