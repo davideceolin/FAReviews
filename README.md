@@ -1,6 +1,10 @@
-## Argument Mining 
+## Description
 
-Install required Python 3 packages:
+
+## Prerequisites
+FAReviews uses [python3](https://www.python.org) for argumentation mining and [prolog](https://www.swi-prolog.org) for argument reasoning. The required prolog scripts can be found in the folder "argue".
+
+To install the required Python 3 packages use:
 
 ```bash
 pip3 install -r requirements.txt
@@ -15,6 +19,8 @@ wget -c "http://deepyeti.ucsd.edu/jianmo/amazon/categoryFilesSmall/AMAZON_FASHIO
 python -m spacy download en_core_web_md
 ```
 
+## Run method 1:
+### Argument Mining
 Perform feature extraction:
 ```bash
 python3 compute_scores2.py 
@@ -36,7 +42,7 @@ Creates:
 1_prods_mc.pkl
 ```
 
-## Argument Reasoning
+### Argument Reasoning
 
 Download the ```argue``` folder, then run the following code:
 ```
@@ -56,3 +62,20 @@ Creates:
 reviews_res.csv
 results.pkl
 ```
+
+## Run method 2:
+The three scripts described above can be ran sequentially using the FAReviews.py. This allows the user to provide the input data and several input parameters. The following arguments can be provided (only `-f` is a required argument, the others are optional):
+
+- `-f`: Provide the location of the input data file (csv expected). Required argument.
+- `-nc`: Number of cores to use for the various processes that are ran in parallel. Default = 8.
+- `-cs`: Chunk size used in compute scores. Default = 100.
+- `-bs`: Batch size used in compute scores. Default = 20.
+- `-trt`: Minimum textrank score threshold for the tokens to be used. Tokens with a textrank score below the threshold are not used. The threshold is used in compute scores, and the resulting output is passed to the scripts that follow. Default = 0.0.
+- `-sn`: Name of the output folder (within the current folder) where you want to save the output. If it does not yet exist, it will be created. Default is *Output*.
+
+Run the script for example as follows:
+```
+python3 FAReviews.py -f Data/mydata.csv -nc 4 -cs 50 -bs 40 -trt 0.10 -sn MyOutputFolder
+```
+
+The script will output all files described in run method 1, and will print which part it is currently working on and how long the finished parts have taken to complete.
