@@ -14,7 +14,7 @@ def main():
     This last step requires the prolog server to be running.
 
     Run with -f to provide the input data file. -nr to define the number of cores,
-    -cs for chuncksize, -bs for batch size, 
+    -cs for chuncksize, -bs for batch size,
     -trt for the textrank threshold, and -sn for the name of the output folder. """
 
     # Parse command line arguments
