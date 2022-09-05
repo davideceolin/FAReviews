@@ -45,18 +45,14 @@ def main():
 
 
 def run_compute_scores(infile, nc, cs, bs, trt, savename):
-    # compute scores
     print('Starting computing scores')
     prods, reviews = compute_scores(infile, nc, cs, bs, trt, savename)
     print('Finished computing scores')
-    # create and solve argumentation graphs
-    # print('Finished creating and solving argumentation graphs')
     return reviews, prods
 
 
 def run_graph(reviews, prods, num_cores, savename):
     from graph_creation3 import run_graph_creation
-    # calculate matrix and clusters
     print('Start calculating matrices and clusters')
     tt = ttime.time()
     df_prods_mc = run_graph_creation(reviews, prods, num_cores)
@@ -74,7 +70,12 @@ def run_prolog_solver(df_prods_mc, reviews, savename):
     import graph_creation_3
     tt = ttime.time()
     print('Start solving graphs')
-    graph_creation_3.run_solver(df_prods_mc, reviews, savename)
+    df, df_results = graph_creation_3.run_solver(df_prods_mc, reviews, savename)
+    try:
+        df_results.to_pickle(os.path.join(savename, "results.pkl"), compression='gzip')
+        df.to_csv(os.path.join(savename, "reviews_res.csv"), compression='gzip')
+    except Exception:
+        print('Failed to save the output of graph_creation')
     print('Finished solving', ttime.time()-tt)
     return
 
