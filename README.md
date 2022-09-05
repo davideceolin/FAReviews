@@ -64,7 +64,8 @@ results.pkl
 ```
 
 ## Run method 2:
-The three scripts described above can be ran sequentially using the FAReviews.py. This allows the user to provide the input data and several input parameters. The following arguments can be provided (only `-f` is a required argument, the others are optional):
+The three scripts described above can be ran sequentially using the FAReviews.py. This allows the user to provide the input data and several input parameters. In order for the argument reasoning part to be able to start from FAReviews.py, you have to make sure to have the prolog server running. <br />
+The following arguments can be provided to FAReviews.py (only `-f` is a required argument, the others are optional):
 
 - `-f`: Provide the location of the input data file (csv expected). Required argument.
 - `-nc`: Number of cores to use for the various processes that are ran in parallel. Default = 8.
@@ -73,9 +74,9 @@ The three scripts described above can be ran sequentially using the FAReviews.py
 - `-trt`: Minimum textrank score threshold for the tokens to be used. Tokens with a textrank score below the threshold are not used. The threshold is used in compute scores, and the resulting output is passed to the scripts that follow. Default = 0.0.
 - `-sn`: Name of the output folder (within the current folder) where you want to save the output. If it does not yet exist, it will be created. Default is *Output*.
 
-Run the script for example as follows:
+Run the script for example as follows, after you have started the prolog server:
 ```
 python3 FAReviews.py -f Data/mydata.csv -nc 4 -cs 50 -bs 40 -trt 0.10 -sn MyOutputFolder
 ```
 
-The script will output all files described in run method 1, and will print which part it is currently working on and how long the finished parts have taken to complete.
+The script will output all files described in run method 1, and will print which part it is currently working on and how long the finished parts have taken to complete. **Note that if you use the textrank threshold, tokens with a textrank score below the threshold are not used and therefore not saved in any of the output files.**
