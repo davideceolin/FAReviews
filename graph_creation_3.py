@@ -184,7 +184,7 @@ if __name__ == "__main__":
                      " save the output")
     df_prods = pd.read_pickle(file2, compression='gzip')
     df = pd.read_csv(file, compression='gzip')
-    df, df_results = run_solver(df_prods, df, "")
+    df, df_results = run_solver(df_prods, df, savename)
     try:
         df_results.to_pickle(os.path.join(savename, "results.pkl"), compression='gzip')
         df.to_csv(os.path.join(savename, "reviews_res.csv"), compression='gzip')
