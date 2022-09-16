@@ -7,6 +7,7 @@ import spacy
 from joblib import Parallel, delayed
 from spacy.language import Language
 from spacy_readability import Readability
+import psutil
 
 
 # Load nlp model
@@ -90,9 +91,11 @@ def compute_scores(file, nc=8, cs=100, bs=20, trt=0.0, savename=""):
 
 
 if __name__ == "__main__":
-    file = str(input("Please provide path to data file: "))
-    nc = int(input("Define number of jobs: "))
-    cs = int(input("Define number of chunks: "))
-    bs = int(input("Define batch size: "))
-    trt = float(input("Define threshold for textrank token collection: "))
+    file = str(input("Please provide path to data file (json(.gz)): "))
+    print('Your logical CPU count is:', psutil.cpu_count(logical=True))
+    nc = int(input("Define number of jobs (optional, default is 8): ") or 8)
+    cs = int(input("Define number of chunks (optional, default is 100): ") or 100)
+    bs = int(input("Define batch size (optional, default is 20): ") or 20)
+    trt = float(input("Define threshold for textrank token collection "
+                "(optional, default is 0.0): ") or 0.0)
     compute_scores(file, nc, cs, bs, trt)
