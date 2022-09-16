@@ -91,7 +91,8 @@ def run_graph_creation(df_reviews, df_prods, nc):
 if __name__ == '__main__':
     file = input('Please provide the file path (csv) for the input data (reviews): ')
     file2 = input('Please provide the file path (pkl) for the input data (product list): ')
-    nc = int(input('Define number of usable cpu: '))
+    print('Your logical CPU count is:', psutil.cpu_count(logical=True))
+    nc = int(input('Define number of usable cpu (optional, default is 8): ') or 8)
     df_reviews = pd.read_csv(file, compression="gzip")
     df_prods = pd.read_pickle(file2, compression="gzip")
     df_prods_mc = run_graph_creation(df_reviews, df_prods, nc)
