@@ -67,7 +67,7 @@ def compute_scores(file, nc=8, cs=100, bs=20, trt=0.0, savename=""):
     df['ranks'] = [x[0] for x in results]
     df['n_tokens'] = [len(x[0]) for x in results]
     df['readability'] = [x[1][0] for x in results]
-    # create df_prods with prods sorted for load balancing over nc 
+    # create df_prods with prods sorted for load balancing over nc
     # based on total number of tokens per product
     df_prod = pd.DataFrame(df[['asin', 'n_tokens']].groupby(['asin']).sum()).reset_index()
     df_prod = df_prod.rename(columns={"asin": "prod"})
