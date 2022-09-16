@@ -33,7 +33,7 @@ def get_matrix_and_clusters(prod, df, k=-1):
     tokens = [x for x in tokens if x != "" and x != " "]
     # Create matrix with wmdistance values
     combis = list(itertools.combinations(tokens, 2))
-    dists = [model.wmdistance(c[0], c[1]) for c in combis]
+    dists = list(itertools.starmap(model.wmdistance, combis))
     dists = [100 if isinf(dist) else 0 if isnan(dist) else dist for dist in dists]
     data = np.zeros((len(tokens), len(tokens)))
     data[np.triu_indices(len(tokens), 1)] = dists
