@@ -79,13 +79,6 @@ def compute_scores(file, nc=8, cs=100, bs=20, trt=0.0, savename=""):
     for indx, value in enumerate(nj):
         df_prod.at[value, 'newi'] = indx
     df_prods = pd.DataFrame(df_prod.sort_values(by=['newi']).reset_index()['prod'])
-    try:
-        bn = os.path.basename(file)
-        output_path = os.path.join(savename, bn[:bn.index('.')])
-        df_prods.to_pickle(output_path + "_prods.pkl", compression="gzip")
-        df.to_csv(output_path + "_reviews.csv", compression="gzip")
-    except Exception:
-        print('Failed to save the output of compute_scores')
     print("--- %s seconds ---" % (time.time() - start_time))
     return df_prods, df
 
@@ -98,4 +91,13 @@ if __name__ == "__main__":
     bs = int(input("Define batch size (optional, default is 20): ") or 20)
     trt = float(input("Define threshold for textrank token collection "
                 "(optional, default is 0.0): ") or 0.0)
-    compute_scores(file, nc, cs, bs, trt)
+    savename = str(input("Please provide the name of the (existing) output folder to which you " +
+                         "want to save the output: " or ""))
+    df_prods, df = compute_scores(file, nc, cs, bs, trt)
+    try:
+        bn = os.path.basename(file)
+        output_path = os.path.join(savename, bn[:bn.index('.')])
+        df_prods.to_pickle(output_path + "_prods.pkl", compression="gzip")
+        df.to_csv(output_path + "_reviews.csv", compression="gzip")
+    except Exception:
+        print('Failed to save the output of compute_scores')
