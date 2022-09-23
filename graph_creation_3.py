@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from operator import itemgetter
 import numpy as np
 import os
+import itertools
 
 
 def color_node(solution):
@@ -48,10 +49,8 @@ def draw_graph(G, model, df, savename):
 
 
 def solve_argumentation_graph_json(G):
-    tt = ttime.time()
     data = json_graph.node_link_data(G)
     r = requests.post('http://localhost:3333/argue', json=data)
-    print('duration loop solve_argumentation_graph_json:', ttime.time()-tt)
     return r.json()
 
 
@@ -59,9 +58,12 @@ def run_solver(df_prods, df, savename):
     stop_words = stopwords.words('english')
     df['solutions'] = "undec"
     df_results = pd.DataFrame(columns=["prodID", "solutions"])
-    for index, row in df_prods.iterrows():
-        prod = row['prod']
-        matrix = df_prods[('matrix', 'clusters')][df_prods['prod'] == prod].iloc[0][0]
+    prods = df_prods['prod'].to_numpy()
+    prod_mc = df_prods[('matrix', 'clusters')].to_numpy()
+    for p in range(len(prods)):
+        prod = prods[p]
+        matrix = prod_mc[p][0]
+        cluster_prod = prod_mc[p][1]
         reviewID = []
         score = []
         tokens = []
@@ -69,95 +71,93 @@ def run_solver(df_prods, df, savename):
         readability = []
         clusters = []
         G = nx.DiGraph()
-        for id, review in df.loc[df['asin'] == row['prod']].iterrows():
-            ranks = ast.literal_eval(str(review['ranks']))
-            readability_1 = review['readability']
-            score_1 = review['overall']
-            reviewID_1 = (review['asin'] + "_" + review['reviewerID'] + "_" +
-                          str(review['unixReviewTime']))
-            for token in ranks:
-                tok = " ".join([x for x in token[0].lower().split() if x not in stop_words])
-                if tok == "" or tok == " ":
-                    continue
+        prod_reviews = pd.DataFrame(df[df['asin'] == prod])
+        ranks_prod = [ast.literal_eval(str(rank)) for rank in prod_reviews['ranks'].to_numpy()]
+        readability_prod = prod_reviews['readability'].to_list()
+        score_prod = prod_reviews['overall'].to_list()
+        reviewID_prod = (prod_reviews['asin'] + '_' + prod_reviews['reviewerID'] + '_' +
+                         prod_reviews['unixReviewTime'].map(str)).to_numpy(dtype=str)
+        for r, ranks in enumerate(ranks_prod):
+            tokens_imp = [[" ".join([x for x in token[0].lower().split() if x not in stop_words]),
+                          token[1]] for token in ranks]
+            tokens_imp = [i for i in tokens_imp if i[0] not in ("", " ")]
+            toks = [i[0] for i in tokens_imp]
+            imps = [i[1] for i in tokens_imp]
+            clusters_toks = [cluster_prod[matrix.columns.get_loc(token)]
+                             if token in list(matrix.columns) else 0 for token in toks]
+            reviewID.extend([reviewID_prod[r]]*len(toks))
+            score.extend([score_prod[r]]*len(toks))
+            tokens.extend(toks)
+            importance.extend(imps)
+            readability.extend([readability_prod[r]]*len(toks))
+            clusters.extend(clusters_toks)
+        for i, j in itertools.product(list(range(len(tokens))), repeat=2):
+            if (reviewID[i] != reviewID[j] and
+                score[i] != score[j] and
+                    clusters[i] == clusters[j]):
+                if not G.has_node(reviewID[i]):
+                    G.add_node(reviewID[i], weight=readability[i])
+                if not G.has_node(reviewID[j]):
+                    G.add_node(reviewID[j], weight=readability[j])
                 try:
-                    cluster = row[('matrix', 'clusters')][1][row[('matrix', 'clusters')
-                                                                 ][0].columns.get_loc(tok)]
+                    w1 = readability[i] * importance[i]
                 except Exception:
-                    cluster = 0
-                reviewID.append(reviewID_1)
-                score.append(score_1)
-                tokens.append(tok)
-                importance.append(token[1])
-                readability.append(readability_1)
-                clusters.append(cluster)
-        for i in range(len(tokens)):
-            for j in range(len(tokens)):
-                if (reviewID[i] != reviewID[j] and
-                    score[i] != score[j] and
-                        clusters[i] == clusters[j]):
-                    if not G.has_node(reviewID[i]):
-                        G.add_node(reviewID[i], weight=readability[i])
-                    if not G.has_node(reviewID[j]):
-                        G.add_node(reviewID[j], weight=readability[j])
-                    try:
-                        w1 = readability[i] * importance[i]
-                    except Exception:
-                        w1 = 0
-                    try:
-                        w2 = readability[j] * importance[j]
-                    except Exception:
-                        w2 = 0
-                    w1 = 0 if math.isnan(w1) else w1
-                    w2 = 0 if math.isnan(w2) else w2
-                    try:
-                        sim_t1_t2 = matrix.at[tokens[i], tokens[j]]
-                    except Exception:
-                        sim_t1_t2 = 0
-                    weight = 0
-                    if w1 > w2:
-                        if G.has_edge(reviewID[i], reviewID[j]):
-                            weight = int(G.get_edge_data(reviewID[i], reviewID[j],
-                                         'weight')['weight'])
-                            G.remove_edge(reviewID[i], reviewID[j])
-                            G.add_edge(reviewID[i], reviewID[j],
-                                       weight=weight + (w1 - w2) * sim_t1_t2)
-                        elif G.has_edge(reviewID[j], reviewID[i]):
-                            weight = int(G.get_edge_data(reviewID[j], reviewID[i],
-                                         'weight')['weight']) * -1
-                            weight = weight + (w1 - w2) * sim_t1_t2
-                            if weight > 0:
-                                G.remove_edge(reviewID[j], reviewID[i])
-                                G.add_edge(reviewID[i], reviewID[j], weight=weight)
-                            else:
-                                if G.has_edge(reviewID[i], reviewID[j]):
-                                    G.remove_edge(reviewID[i], reviewID[j])
-                                G.add_edge(reviewID[j], reviewID[i],
-                                           weight=weight * -1)
-                        else:
-                            G.add_edge(reviewID[i], reviewID[j],
-                                       weight=weight + (w1 - w2) * sim_t1_t2)
-                    elif w2 > w1:
-                        if G.has_edge(reviewID[j], reviewID[i]):
-                            weight = int(G.get_edge_data(reviewID[j], reviewID[i],
-                                         'weight')['weight'])
+                    w1 = 0
+                try:
+                    w2 = readability[j] * importance[j]
+                except Exception:
+                    w2 = 0
+                w1 = 0 if math.isnan(w1) else w1
+                w2 = 0 if math.isnan(w2) else w2
+                try:
+                    sim_t1_t2 = matrix.at[tokens[i], tokens[j]]
+                except Exception:
+                    sim_t1_t2 = 0
+                weight = 0
+                if w1 > w2:
+                    if G.has_edge(reviewID[i], reviewID[j]):
+                        weight = int(G.get_edge_data(reviewID[i], reviewID[j],
+                                     'weight')['weight'])
+                        G.remove_edge(reviewID[i], reviewID[j])
+                        G.add_edge(reviewID[i], reviewID[j],
+                                   weight=weight + (w1 - w2) * sim_t1_t2)
+                    elif G.has_edge(reviewID[j], reviewID[i]):
+                        weight = int(G.get_edge_data(reviewID[j], reviewID[i],
+                                     'weight')['weight']) * -1
+                        weight = weight + (w1 - w2) * sim_t1_t2
+                        if weight > 0:
                             G.remove_edge(reviewID[j], reviewID[i])
-                            G.add_edge(reviewID[j], reviewID[i],
-                                       weight=weight + (w2 - w1) * sim_t1_t2)
-                        elif G.has_edge(reviewID[i], reviewID[j]):
-                            weight = int(G.get_edge_data(reviewID[i], reviewID[j],
-                                         'weight')['weight']) * -1
-                            weight = weight + (w2 - w1) * sim_t1_t2
-                            if weight > 0:
-                                G.remove_edge(reviewID[i], reviewID[j])
-                                G.add_edge(reviewID[j], reviewID[i], weight=weight)
-                            else:
-                                if G.has_edge(reviewID[j], reviewID[i]):
-                                    G.remove_edge(reviewID[j], reviewID[i])
-                                G.add_edge(reviewID[i], reviewID[j],
-                                           weight=weight * -1)
+                            G.add_edge(reviewID[i], reviewID[j], weight=weight)
                         else:
+                            if G.has_edge(reviewID[i], reviewID[j]):
+                                G.remove_edge(reviewID[i], reviewID[j])
                             G.add_edge(reviewID[j], reviewID[i],
-                                       weight=weight + (w2 - w1) * sim_t1_t2)
+                                       weight=weight * -1)
+                    else:
+                        G.add_edge(reviewID[i], reviewID[j],
+                                   weight=weight + (w1 - w2) * sim_t1_t2)
+                elif w2 > w1:
+                    if G.has_edge(reviewID[j], reviewID[i]):
+                        weight = int(G.get_edge_data(reviewID[j], reviewID[i],
+                                     'weight')['weight'])
+                        G.remove_edge(reviewID[j], reviewID[i])
+                        G.add_edge(reviewID[j], reviewID[i],
+                                   weight=weight + (w2 - w1) * sim_t1_t2)
+                    elif G.has_edge(reviewID[i], reviewID[j]):
+                        weight = int(G.get_edge_data(reviewID[i], reviewID[j],
+                                     'weight')['weight']) * -1
+                        weight = weight + (w2 - w1) * sim_t1_t2
+                        if weight > 0:
+                            G.remove_edge(reviewID[i], reviewID[j])
+                            G.add_edge(reviewID[j], reviewID[i], weight=weight)
+                        else:
+                            if G.has_edge(reviewID[j], reviewID[i]):
+                                G.remove_edge(reviewID[j], reviewID[i])
+                            G.add_edge(reviewID[i], reviewID[j],
+                                       weight=weight * -1)
+                    else:
+                        G.add_edge(reviewID[j], reviewID[i],
+                                   weight=weight + (w2 - w1) * sim_t1_t2)
         r = solve_argumentation_graph_json(G)
         if 'models' in r and len(r['models']) > 0:
             models = r['models']
