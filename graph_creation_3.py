@@ -54,7 +54,7 @@ def solve_argumentation_graph_json(G):
     return r.json()
 
 
-def run_solver(df_prods, df, savename):
+def run_solver(df_prods, df, savename, savefigs):
     stop_words = stopwords.words('english')
     df['solutions'] = "undec"
     df_results = pd.DataFrame(columns=["prodID", "solutions"])
@@ -172,7 +172,8 @@ def run_solver(df_prods, df, savename):
                 prodID, reviewerID, time = node['id'].upper().split("_")
                 df.loc[(df['asin'] == prodID) & (df['reviewerID'] == reviewerID),
                        'solutions'] = node['state']
-            draw_graph(G, model, df, savename)
+            if savefigs:
+                draw_graph(G, model, df, savename)
     return df, df_results
 
 
@@ -182,9 +183,11 @@ if __name__ == "__main__":
     file2 = input('Please provide the file path (pkl) for the input data (mc product list): ')
     savename = input("Please provide the name of the (existing) output folder to which you want to",
                      " save the output")
+    savefigs = bool(input("Do you want to save the graphs to png per product? "
+                          "(Tru/False, default is False)"))
     df_prods = pd.read_pickle(file2, compression='gzip')
     df = pd.read_csv(file, compression='gzip')
-    df, df_results = run_solver(df_prods, df, savename)
+    df, df_results = run_solver(df_prods, df, savename, savefigs)
     try:
         df_results.to_pickle(os.path.join(savename, "results.pkl"), compression='gzip')
         df.to_csv(os.path.join(savename, "reviews_res.csv"), compression='gzip')

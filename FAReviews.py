@@ -34,6 +34,8 @@ def main():
     parser.add_argument('-sn', '---savename', type=str, default="Output", help="Name of the output"
                         " folder (within the current folder) where you want to save the output. "
                         "If it does not yet exist, it will be created.")
+    parser.add_argument('-sf', '--savefigs', type=bool, default=False, help="Option to save the "
+                        "constructed graphs to png per product")
     args = parser.parse_args()
 
     if not (args.file):
@@ -41,7 +43,7 @@ def main():
     if not os.path.exists(args.savename):
         os.mkdir(args.savename)
     return (args.file, args.num_cores, args.chunk_size, args.batch_size, args.textrank_threshold,
-            args.savename)
+            args.savename, args.savefigs)
 
 
 def run_compute_scores(infile, nc, cs, bs, trt, savename):
@@ -66,13 +68,12 @@ def run_graph(reviews, prods, num_cores, savename):
     return df_prods_mc
 
 
-def run_prolog_solver(df_prods_mc, reviews, savename):
+def run_prolog_solver(df_prods_mc, reviews, savename, savefigs):
     import graph_creation_3
     tt = ttime.time()
     print('Start solving graphs')
-    df, df_results = graph_creation_3.run_solver(df_prods_mc, reviews, savename)
+    df = graph_creation_3.run_graph_solver(df_prods_mc, reviews, savename, savefigs)
     try:
-        df_results.to_pickle(os.path.join(savename, "results.pkl"), compression='gzip')
         df.to_csv(os.path.join(savename, "reviews_res.csv"), compression='gzip')
     except Exception:
         print('Failed to save the output of graph_creation')
@@ -85,10 +86,10 @@ if __name__ == "__main__":
     st = ttime.time()
     start_time = f"{datetime.now():%Y-%m-%d %H:%M:%S}"
     print('Start time:', start_time)
-    file, num_cores, chunk_size, batch_size, trt, savename = main()
+    file, num_cores, chunk_size, batch_size, trt, savename, savefigs = main()
     if file is not None:
         reviews, prods = run_compute_scores(file, num_cores, chunk_size, batch_size, trt, savename)
         df_prods_mc = run_graph(reviews, prods, num_cores, savename)
-        run_prolog_solver(df_prods_mc, reviews, savename)
+        run_prolog_solver(df_prods_mc, reviews, savename, savefigs)
     end_time = f"{datetime.now():%Y-%m-%d %H:%M:%S}"
     print('End time FAReviews:', end_time, 'duration:', ttime.time()-st)
