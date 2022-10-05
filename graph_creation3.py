@@ -8,7 +8,6 @@ import ast
 import itertools
 import multiprocessing as mp
 import os
-import platform
 from functools import partial
 
 import gensim
@@ -61,30 +60,21 @@ def get_matrix_and_clusters(prod, df, k=-1):
             cluster_labels = []
     else:
         cluster_labels = []
-    return (df_matrix, cluster_labels)
+    return prod, df_matrix, cluster_labels
 
 
-def add_features(df, ncores, df_reviews):
-    if platform.system() != 'Darwin':
-        psutil.Process().cpu_affinity([ncores])
-    df['matrix', 'clusters'] = df['prod'].apply(lambda x: get_matrix_and_clusters(x,
-                                                                                  df_reviews,
-                                                                                  k=-1))
-    return df
-
-
-def parallelize_dataframe(df_to_par, func, n_cores=4):
-    df_split = np.array_split(df_to_par, n_cores)
+def parallelize_get_mc(func, prods, n_cores):
     pool = mp.Pool(n_cores)
-    df_res = pd.concat(pool.starmap(func, zip(df_split, range(n_cores))))
+    prods_mc = pool.map(func, prods)
+    df_prods_mc = pd.DataFrame(columns=['prod', 'matrix', 'clusters'], data=prods_mc)
     pool.close()
     pool.join()
-    return df_res
+    return df_prods_mc
 
 
-def run_graph_creation(df_reviews, df_prods, nc):
-    add_features_df = partial(add_features, df_reviews=df_reviews)
-    df_prods_mc = parallelize_dataframe(df_prods, func=add_features_df, n_cores=nc)
+def run_graph_creation(df_reviews, prods, nc):
+    p_get_mc = partial(get_matrix_and_clusters, df=df_reviews)
+    df_prods_mc = parallelize_get_mc(p_get_mc, prods, nc)
     return df_prods_mc
 
 
@@ -95,7 +85,8 @@ if __name__ == '__main__':
     nc = int(input('Define number of usable cpu (optional, default is 8): ') or 8)
     df_reviews = pd.read_csv(file, compression="gzip")
     df_prods = pd.read_pickle(file2, compression="gzip")
-    df_prods_mc = run_graph_creation(df_reviews, df_prods, nc)
+    prods = df_prods['prod'].to_list()
+    df_prods_mc = run_graph_creation(df_reviews, prods, nc)
     try:
         bn = os.path.basename(file)
         output_path = os.path.join("", bn[:bn.index('_reviews.')])
