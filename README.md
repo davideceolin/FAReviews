@@ -13,12 +13,17 @@ pip3 install pytextrank
 ```
 
 
-Download data (todo: download nltk stopwords)
+Download the pre-trained vectors trained on part of Google News dataset (about 100 billion words): [GoogleNews-vectors-negative300.bin.gz](https://drive.google.com/file/d/0B7XkCwpI5KDYNlNUTTlSS21pQmM/edit?resourcekey=0-wjGZdNAUop6WykTtMip30g) and save it in the FAREVIEWS folder. 
 
+Download the Amazon reviews data set:
 ```bash
-wget -c "https://s3.amazonaws.com/dl4j-distribution/GoogleNews-vectors-negative300.bin.gz"
 wget -c "http://deepyeti.ucsd.edu/jianmo/amazon/categoryFilesSmall/AMAZON_FASHION_5.json.gz"
+```
+
+Install the Spacy [en_core_web_md](https://spacy.io/models/en) pipeline and [nltk stopwords](https://www.nltk.org)
+```
 python -m spacy download en_core_web_md
+python -m nltk.downloader stopwords
 ```
 
 ## Run method 1:
