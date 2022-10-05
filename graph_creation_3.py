@@ -212,7 +212,9 @@ if __name__ == "__main__":
     df = pd.read_csv(file, compression='gzip')
     df_results = run_graph_solver(df_prods, nc, df, savename, savefigs)
     try:
-        df_results.to_csv(os.path.join(savename, "reviews_res.csv"), compression='gzip')
+        bn = os.path.basename(file)
+        output_path = os.path.join(savename, bn[:bn.index('.')])
+        df_results.to_csv(output_path + "reviews_results.csv", compression='gzip')
     except Exception:
         print('Failed to save the output of graph_creation')
     print('Duration:', ttime.time()-t1)
