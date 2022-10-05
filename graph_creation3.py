@@ -83,13 +83,15 @@ if __name__ == '__main__':
     file2 = input('Please provide the file path (pkl) for the input data (product list): ')
     print('Your logical CPU count is:', psutil.cpu_count(logical=True))
     nc = int(input('Define number of usable cpu (optional, default is 8): ') or 8)
+    savename = str(input("Please provide the name of the (existing) output folder to which you " +
+                         "want to save the output: " or ""))
     df_reviews = pd.read_csv(file, compression="gzip")
     df_prods = pd.read_pickle(file2, compression="gzip")
     prods = df_prods['prod'].to_list()
     df_prods_mc = run_graph_creation(df_reviews, prods, nc)
     try:
         bn = os.path.basename(file)
-        output_path = os.path.join("", bn[:bn.index('_reviews.')])
+        output_path = os.path.join(savename, bn[:bn.index('_reviews.')])
         df_prods_mc.to_pickle(output_path + "_prods_mc.pkl", compression="gzip")
     except Exception:
         print('Failed to save the output of graph_creation')
