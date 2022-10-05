@@ -25,42 +25,40 @@ Perform feature extraction:
 ```bash
 python3 compute_scores2.py 
 ```
-Creates: 
+The script will ask you to provide the number of jobs, chunks, batch size, textrank threshold, and folder for output. It creates in the output folder: 
 ```
-1_prods.pkl
-1_reviews.csv
+[datafile name]_prods.pkl
+[datafile name]_reviews.csv
 ```
 
 Create the matrix with distance metrics:
 ```bash
 python3 graph_creation3.py 
 ```
-
-Creates:
+The script will ask you to provide the csv file with review data ([datafile name]_reviews.csv), the pkl file with the product list ([datafile name]_prods.pkl), the number of cores to use, and folder for output. It creates in the output folder:
 
 ```
-1_prods_mc.pkl
+[datafile name]_prods_mc.pkl
 ```
 
 ### Argument Reasoning
 
-Download the ```argue``` folder, then run the following code:
+Download the ```argue``` folder, then run the following code to start the server:
 ```
 cd argue
 swipl server.pl
 ?- server(3333).
 ```
 
-Solve the Argumentation Graph
-
+While the server is running, solve the Argumentation Graph. 
 ```bash
 python3 graph_creation_3.py 
 ```
-
-Creates:
+The script will ask you to provide the csv file with review data ([datafile name]_reviews.csv), the pkl file with the product list and matrices and clusters ([datafile name]_prods_mc.pkl), the number of cores to use, the folder to use for the output, and whether or not to save the figures of the created graphs to png. It creates in the output folder:
 ```
-reviews_res.csv
-results.pkl
+[datafile name]_reviews_results.csv
+[product asin].png
+[product asin_labels].png
 ```
 
 ## Run method 2:
@@ -73,10 +71,12 @@ The following arguments can be provided to FAReviews.py (only `-f` is a required
 - `-bs`: Batch size used in compute scores. Default = 20.
 - `-trt`: Minimum textrank score threshold for the tokens to be used. Tokens with a textrank score below the threshold are not used. The threshold is used in compute scores, and the resulting output is passed to the scripts that follow. Default = 0.0.
 - `-sn`: Name of the output folder (within the current folder) where you want to save the output. If it does not yet exist, it will be created. Default is *Output*.
+- `-si`: True/False If true, also save the output of compute scores and run_graph. If false, only the output of graph_creation_3 is saved. Default is False.
+- `-sf`: True/False. Option to save the constructed graphs to png per product. Default is False.
 
 Run the script for example as follows, after you have started the prolog server:
 ```
 python3 FAReviews.py -f Data/mydata.csv -nc 4 -cs 50 -bs 40 -trt 0.10 -sn MyOutputFolder
 ```
 
-The script will output all files described in run method 1, and will print which part it is currently working on and how long the finished parts have taken to complete. **Note that if you use the textrank threshold, tokens with a textrank score below the threshold are not used and therefore not saved in any of the output files.**
+The script will output the final results of graph_creation_3 (and intermediate results/graphs if respective arguments are set), and will print which part it is currently working on and how long the finished parts have taken to complete. **Note that if you use the textrank threshold, tokens with a textrank score below the threshold are not used and therefore not saved in any of the output files.**
