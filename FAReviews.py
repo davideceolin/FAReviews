@@ -3,6 +3,7 @@ import os
 import time as ttime
 from argparse import RawTextHelpFormatter
 from datetime import datetime
+import pandas as pd
 
 from compute_scores2 import compute_scores
 
@@ -34,6 +35,8 @@ def main():
     parser.add_argument('-sn', '---savename', type=str, default="Output", help="Name of the output"
                         " folder (within the current folder) where you want to save the output. "
                         "If it does not yet exist, it will be created.")
+    parser.add_argument('-si', '--save_intermediate', type=bool, default=False, help="If true, also"
+                        " save the outputof compute scores and run_graph")
     parser.add_argument('-sf', '--savefigs', type=bool, default=False, help="Option to save the "
                         "constructed graphs to png per product")
     args = parser.parse_args()
@@ -43,38 +46,51 @@ def main():
     if not os.path.exists(args.savename):
         os.mkdir(args.savename)
     return (args.file, args.num_cores, args.chunk_size, args.batch_size, args.textrank_threshold,
-            args.savename, args.savefigs)
+            args.savename, args.save_intermediate, args.savefigs)
 
 
-def run_compute_scores(infile, nc, cs, bs, trt, savename):
+def run_compute_scores(infile, nc, cs, bs, trt, si, savename):
     print('Starting computing scores')
     prods, reviews = compute_scores(infile, nc, cs, bs, trt, savename)
+    if si:
+        df_prods = pd.DataFrame({'prod': prods})
+        try:
+            bn = os.path.basename(file)
+            output_path = os.path.join(savename, bn[:bn.index('.')])
+            df_prods.to_pickle(output_path + "_prods.pkl", compression="gzip")
+            reviews.to_csv(output_path + "_reviews.csv", compression="gzip")
+        except Exception:
+            print('Failed to save the output of compute_scores')
     print('Finished computing scores')
     return reviews, prods
 
 
-def run_graph(reviews, prods, num_cores, savename):
+def run_graph(reviews, prods, num_cores, si, savename):
     from graph_creation3 import run_graph_creation
     print('Start calculating matrices and clusters')
     tt = ttime.time()
     df_prods_mc = run_graph_creation(reviews, prods, num_cores)
-    try:
-        bn = os.path.basename(file)
-        output_path = os.path.join(savename, bn[:bn.index('.')])
-        df_prods_mc.to_pickle(output_path + "_prods_mc.pkl", compression="gzip")
-    except Exception:
-        print('Failed to save the output of graph_creation')
+    if si:
+        try:
+            bn = os.path.basename(file)
+            output_path = os.path.join(savename, bn[:bn.index('.')])
+            df_prods_mc.to_pickle(output_path + "_prods_mc.pkl", compression="gzip")
+        except Exception:
+            print('Failed to save the output of graph_creation')
     print('Finished calculating matrix and clusters', ttime.time()-tt)
     return df_prods_mc
 
 
-def run_prolog_solver(df_prods_mc, reviews, savename, savefigs):
+def run_prolog_solver(df_prods_mc, reviews, nc, savename, savefigs):
     import graph_creation_3
     tt = ttime.time()
     print('Start solving graphs')
-    df = graph_creation_3.run_graph_solver(df_prods_mc, reviews, savename, savefigs)
+    df_results = graph_creation_3.run_graph_solver(df_prods_mc, reviews, nc,
+                                                   savename, savefigs)
     try:
-        df.to_csv(os.path.join(savename, "reviews_res.csv"), compression='gzip')
+        bn = os.path.basename(file)
+        output_path = os.path.join(savename, bn[:bn.index('.')])
+        df_results.to_csv(output_path + "reviews_results.csv", compression='gzip')
     except Exception:
         print('Failed to save the output of graph_creation')
     print('Finished solving', ttime.time()-tt)
@@ -86,10 +102,11 @@ if __name__ == "__main__":
     st = ttime.time()
     start_time = f"{datetime.now():%Y-%m-%d %H:%M:%S}"
     print('Start time:', start_time)
-    file, num_cores, chunk_size, batch_size, trt, savename, savefigs = main()
+    file, num_cores, chunk_size, batch_size, trt, savename, save_intermediate, savefigs = main()
     if file is not None:
-        reviews, prods = run_compute_scores(file, num_cores, chunk_size, batch_size, trt, savename)
-        df_prods_mc = run_graph(reviews, prods, num_cores, savename)
-        run_prolog_solver(df_prods_mc, reviews, savename, savefigs)
+        reviews, prods = run_compute_scores(file, num_cores, chunk_size, batch_size, trt,
+                                            save_intermediate, savename)
+        df_prods_mc = run_graph(reviews, prods, num_cores, save_intermediate, savename)
+        run_prolog_solver(df_prods_mc, reviews, num_cores, savename, savefigs)
     end_time = f"{datetime.now():%Y-%m-%d %H:%M:%S}"
     print('End time FAReviews:', end_time, 'duration:', ttime.time()-st)
