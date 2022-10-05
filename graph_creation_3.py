@@ -13,6 +13,11 @@ import numpy as np
 import os
 import itertools
 import psutil
+import multiprocessing as mp
+from functools import partial
+
+
+stop_words = stopwords.words('english')
 
 
 def color_node(solution):
@@ -174,6 +179,25 @@ def run_solver(prod, mc, df, savename, savefigs):
     return prod_reviews
 
 
+def parallelize_run_solver(p_run_solver, prods, mc_m, mc_c, n_cores):
+    pool = mp.Pool(n_cores)
+    mc = zip(mc_m, mc_c)
+    df_results = pd.concat(pool.starmap(p_run_solver, zip(prods, mc)))
+    pool.close()
+    pool.join()
+    return df_results
+
+
+def run_graph_solver(df_prods, df_reviews, nc, savename, savefigs):
+    df_reviews['solutions'] = "undec"
+    p_run_solver = partial(run_solver, df=df_reviews, savename=savename, savefigs=savefigs)
+    prods = df_prods['prod'].to_list()
+    mc_matrix = df_prods['matrix'].to_list()
+    mc_cluster = df_prods['clusters'].to_list()
+    df_results = parallelize_run_solver(p_run_solver, prods, mc_matrix, mc_cluster, nc)
+    return df_results.sort_index()
+
+
 if __name__ == "__main__":
     t1 = ttime.time()
     file = input('Please provide the file path (csv) for the input data (reviews): ')
@@ -186,7 +210,7 @@ if __name__ == "__main__":
     nc = int(input('Define number of usable cpu (optional, default is 8): ') or 8)
     df_prods = pd.read_pickle(file2, compression='gzip')
     df = pd.read_csv(file, compression='gzip')
-    df_results = run_solver(df_prods, df, savename, savefigs)
+    df_results = run_graph_solver(df_prods, nc, df, savename, savefigs)
     try:
         df_results.to_csv(os.path.join(savename, "reviews_res.csv"), compression='gzip')
     except Exception:
