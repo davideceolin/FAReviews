@@ -90,7 +90,7 @@ def run_prolog_solver(df_prods_mc, reviews, nc, savename, savefigs):
     try:
         bn = os.path.basename(file)
         output_path = os.path.join(savename, bn[:bn.index('.')])
-        df_results.to_csv(output_path + "reviews_results.csv", compression='gzip')
+        df_results.to_csv(output_path + "_reviews_results.csv", compression='gzip')
     except Exception:
         print('Failed to save the output of graph_creation')
     print('Finished solving', ttime.time()-tt)
