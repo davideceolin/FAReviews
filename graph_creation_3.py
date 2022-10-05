@@ -12,6 +12,7 @@ from operator import itemgetter
 import numpy as np
 import os
 import itertools
+import psutil
 
 
 def color_node(solution):
@@ -181,16 +182,17 @@ if __name__ == "__main__":
     t1 = ttime.time()
     file = input('Please provide the file path (csv) for the input data (reviews): ')
     file2 = input('Please provide the file path (pkl) for the input data (mc product list): ')
-    savename = input("Please provide the name of the (existing) output folder to which you want to",
-                     " save the output")
+    savename = str(input("Please provide the name of the (existing) output folder to which you " +
+                         "want to save the output: " or ""))
     savefigs = bool(input("Do you want to save the graphs to png per product? "
-                          "(Tru/False, default is False)"))
+                          "(Tru/False, default is False)" or False))
+    print('Your logical CPU count is:', psutil.cpu_count(logical=True))
+    nc = int(input('Define number of usable cpu (optional, default is 8): ') or 8)
     df_prods = pd.read_pickle(file2, compression='gzip')
     df = pd.read_csv(file, compression='gzip')
     df, df_results = run_solver(df_prods, df, savename, savefigs)
     try:
-        df_results.to_pickle(os.path.join(savename, "results.pkl"), compression='gzip')
-        df.to_csv(os.path.join(savename, "reviews_res.csv"), compression='gzip')
+        df_results.to_csv(os.path.join(savename, "reviews_res.csv"), compression='gzip')
     except Exception:
         print('Failed to save the output of graph_creation')
     print('Duration:', ttime.time()-t1)
