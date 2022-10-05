@@ -8,6 +8,8 @@ To install the required Python 3 packages use:
 
 ```bash
 pip3 install -r requirements.txt
+pip3 install --upgrade spacy
+pip3 install pytextrank
 ```
 
 
