@@ -56,7 +56,7 @@ def preprocess_parallel(texts, n_jobs, chunksize, batchsize, trt):
     return flatten(result)
 
 
-def compute_scores(file, nc=8, cs=100, bs=20, trt=0.0, savename=""):
+def compute_scores(file, nc=8, cs=100, bs=20, trt=0.0):
     start_time = time.time()
     if not os.path.exists(file):
         raise ValueError('Cannot find file:', file)
@@ -68,8 +68,9 @@ def compute_scores(file, nc=8, cs=100, bs=20, trt=0.0, savename=""):
     df['ranks'] = [x[0] for x in results]
     df['n_tokens'] = [len(x[0]) for x in results]
     df['readability'] = [x[1][0] for x in results]
-    df = df.sort_values(by=['n_tokens'], ascending=False)
-    prods = list(df['asin'].unique())
+    df_prod = pd.DataFrame(df[['asin', 'n_tokens']].groupby(['asin']).sum()).reset_index()
+    df_prod = df_prod.sort_values(by=['n_tokens'], ascending=False)
+    prods = list(df_prod['asin'].unique())
     print("--- %s seconds ---" % (time.time() - start_time))
     return prods, df
 
