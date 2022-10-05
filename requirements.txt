@@ -1,7 +1,6 @@
-spacy>=3.3.0
+spacy<3.0
 spacy-legacy==3.0.9
 spacy_readability>=1.4.1
-pytextrank>=3.2.0
 networkx>=2.8.0
 pandas>=1.4
 nltk>=3.7
