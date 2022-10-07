@@ -3,7 +3,6 @@ import os
 import time as ttime
 from argparse import RawTextHelpFormatter
 from datetime import datetime
-import pandas as pd
 
 from compute_scores2 import compute_scores
 
@@ -51,9 +50,8 @@ def main():
 
 def run_compute_scores(infile, nc, cs, bs, trt, si, savename):
     print('Starting computing scores')
-    prods, reviews = compute_scores(infile, nc, cs, bs, trt, savename)
+    reviews, df_prods = compute_scores(infile, nc, cs, bs, trt)
     if si:
-        df_prods = pd.DataFrame({'prod': prods})
         try:
             bn = os.path.basename(file)
             output_path = os.path.join(savename, bn[:bn.index('.')])
@@ -62,14 +60,15 @@ def run_compute_scores(infile, nc, cs, bs, trt, si, savename):
         except Exception:
             print('Failed to save the output of compute_scores')
     print('Finished computing scores')
-    return reviews, prods
+    return reviews, df_prods
 
 
-def run_graph(reviews, prods, num_cores, si, savename):
+def run_graph(reviews, df_prods, num_cores, si, savename):
     from graph_creation3 import run_graph_creation
     print('Start calculating matrices and clusters')
     tt = ttime.time()
-    df_prods_mc = run_graph_creation(reviews, prods, num_cores)
+    df_prods_mc = run_graph_creation(reviews, df_prods, num_cores)
+    df_prods_mc = df_prods_mc.sort_values(by=['n_tokens'], ascending=False)
     if si:
         try:
             bn = os.path.basename(file)
@@ -104,9 +103,9 @@ if __name__ == "__main__":
     print('Start time:', start_time)
     file, num_cores, chunk_size, batch_size, trt, savename, save_intermediate, savefigs = main()
     if file is not None:
-        reviews, prods = run_compute_scores(file, num_cores, chunk_size, batch_size, trt,
-                                            save_intermediate, savename)
-        df_prods_mc = run_graph(reviews, prods, num_cores, save_intermediate, savename)
+        reviews, df_prods = run_compute_scores(file, num_cores, chunk_size, batch_size, trt,
+                                               save_intermediate, savename)
+        df_prods_mc = run_graph(reviews, df_prods, num_cores, save_intermediate, savename)
         run_prolog_solver(df_prods_mc, reviews, num_cores, savename, savefigs)
     end_time = f"{datetime.now():%Y-%m-%d %H:%M:%S}"
     print('End time FAReviews:', end_time, 'duration:', ttime.time()-st)
