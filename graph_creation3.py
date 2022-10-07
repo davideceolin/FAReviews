@@ -8,6 +8,8 @@ import ast
 import itertools
 import multiprocessing as mp
 import os
+import platform
+import time as ttime
 from functools import partial
 
 import gensim
@@ -19,13 +21,17 @@ from numpy import isinf, isnan
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 
-stop_words = stopwords.words('english')
-model = gensim.models.KeyedVectors.load_word2vec_format(
-            'GoogleNews-vectors-negative300.bin.gz', binary=True)
+
+def load_model():
+    stop_words = stopwords.words('english')
+    model = gensim.models.KeyedVectors.load_word2vec_format(
+                'GoogleNews-vectors-negative300.bin.gz', binary=True)
+    return model, stop_words
 
 
-def get_matrix_and_clusters(prod, df, k=-1):
+def get_matrix_and_clusters(prod, df, model, stop_words, k=-1):
     # Get tokens
+    t1 = ttime.time()
     k = [x for x in df.loc[df['asin'].str.match(prod), 'ranks']]
     tokens = [y[0].lower().split() for x in k for y in ast.literal_eval(str(x))]
     tokens = list(set([" ".join(filter(lambda y: y not in stop_words, x)) for x in tokens]))
@@ -38,6 +44,7 @@ def get_matrix_and_clusters(prod, df, k=-1):
     data[np.triu_indices(len(tokens), 1)] = dists
     data = data + data.T
     df_matrix = pd.DataFrame(data, index=tokens, columns=tokens)
+    tm = ttime.time()
     # Calculate clusters
     silhouettes = []
     if not df_matrix.empty:
@@ -60,21 +67,37 @@ def get_matrix_and_clusters(prod, df, k=-1):
             cluster_labels = []
     else:
         cluster_labels = []
-    return prod, df_matrix, cluster_labels
+    tc = ttime.time()
+    print(prod, len(tokens), tm-t1, tc-tm, tc-t1, mp.current_process())
+    return (df_matrix, cluster_labels)
 
 
-def parallelize_get_mc(func, prods, n_cores):
+def add_features(df, ncores, df_reviews, model, stop_words):
+    if platform.system() != 'Darwin':
+        psutil.Process().cpu_affinity([ncores])
+    df['matrix', 'clusters'] = df['prod'].apply(lambda x:
+                                                get_matrix_and_clusters(x,
+                                                                        df_reviews,
+                                                                        model,
+                                                                        stop_words,
+                                                                        k=-1))
+    return df
+
+
+def parallelize_dataframe(df_to_par, func, n_cores=4):
+    df_split = np.array_split(df_to_par, n_cores)
     pool = mp.Pool(n_cores)
-    prods_mc = pool.map(func, prods)
-    df_prods_mc = pd.DataFrame(columns=['prod', 'matrix', 'clusters'], data=prods_mc)
+    df_res = pd.concat(pool.starmap(func, zip(df_split, range(n_cores))))
     pool.close()
     pool.join()
-    return df_prods_mc
+    return df_res
 
 
-def run_graph_creation(df_reviews, prods, nc):
-    p_get_mc = partial(get_matrix_and_clusters, df=df_reviews)
-    df_prods_mc = parallelize_get_mc(p_get_mc, prods, nc)
+def run_graph_creation(df_reviews, df_prods, nc):
+    model, stop_words = load_model()
+    add_features_df = partial(add_features, df_reviews=df_reviews,
+                              model=model, stop_words=stop_words)
+    df_prods_mc = parallelize_dataframe(df_prods, func=add_features_df, n_cores=nc)
     return df_prods_mc
 
 
@@ -87,8 +110,7 @@ if __name__ == '__main__':
                          "want to save the output: " or ""))
     df_reviews = pd.read_csv(file, compression="gzip")
     df_prods = pd.read_pickle(file2, compression="gzip")
-    prods = df_prods['prod'].to_list()
-    df_prods_mc = run_graph_creation(df_reviews, prods, nc)
+    df_prods_mc = run_graph_creation(df_reviews, df_prods, nc)
     try:
         bn = os.path.basename(file)
         output_path = os.path.join(savename, bn[:bn.index('_reviews.')])
