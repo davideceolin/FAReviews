@@ -69,10 +69,19 @@ def compute_scores(file, nc=8, cs=100, bs=20, trt=0.0):
     df['n_tokens'] = [len(x[0]) for x in results]
     df['readability'] = [x[1][0] for x in results]
     df_prod = pd.DataFrame(df[['asin', 'n_tokens']].groupby(['asin']).sum()).reset_index()
+    df_prod = df_prod.rename(columns={"asin": "prod"})
     df_prod = df_prod.sort_values(by=['n_tokens'], ascending=False)
     prods = list(df_prod['asin'].unique())
+    indices = list(df_prod.index.values)
+    ni = [indices[i:][::nc] for i in range(nc)]
+    nj = [item for i in ni for item in i]
+    df_prod['newi'] = None
+    for indx, value in enumerate(nj):
+        df_prod.at[value, 'newi'] = indx
+        df_prods = pd.DataFrame(df_prod.sort_values(by=['newi']).reset_index()[['prod',
+                                                                                'n_tokens']])
     print("--- %s seconds ---" % (time.time() - start_time))
-    return prods, df
+    return prods, df, df_prods
 
 
 if __name__ == "__main__":
