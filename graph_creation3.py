@@ -69,18 +69,18 @@ def get_matrix_and_clusters(prod, df, model, stop_words, k=-1):
         cluster_labels = []
     tc = ttime.time()
     print(prod, len(tokens), tm-t1, tc-tm, tc-t1, mp.current_process())
-    return (df_matrix, cluster_labels)
+    return df_matrix, cluster_labels
 
 
 def add_features(df, ncores, df_reviews, model, stop_words):
     if platform.system() != 'Darwin':
         psutil.Process().cpu_affinity([ncores])
-    df['matrix', 'clusters'] = df['prod'].apply(lambda x:
-                                                get_matrix_and_clusters(x,
-                                                                        df_reviews,
-                                                                        model,
-                                                                        stop_words,
-                                                                        k=-1))
+    df['matrix'], df['clusters'] = zip(*df['prod'].apply(lambda x:
+                                                         get_matrix_and_clusters(x,
+                                                                                 df_reviews,
+                                                                                 model,
+                                                                                 stop_words,
+                                                                                 k=-1)))
     return df
 
 
