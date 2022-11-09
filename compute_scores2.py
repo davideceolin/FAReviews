@@ -64,7 +64,9 @@ def compute_scores(file, nc=8, cs=100, bs=20, trt=0.0):
         print('Computing scores for', file, 'with nc:', nc, 'cs:', cs, 'bs:', bs, 'trt:', trt)
     df = pd.read_json(file, compression='gzip', lines=True)
     df['reviewText'] = df['reviewText'].fillna('')
-    df_reviews = df.drop_duplicates().reset_index()
+    # remove duplicate dows
+    df_reviews_2 = df.loc[df.astype(str).drop_duplicates().index]
+    df_reviews = df_reviews_2.reset_index()
     results = preprocess_parallel(df_reviews['reviewText'].astype(str), nc, cs, bs, trt)
     df_reviews['ranks'] = [x[0] for x in results]
     df_reviews['n_tokens'] = [len(x[0]) for x in results]

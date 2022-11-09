@@ -109,7 +109,9 @@ if __name__ == '__main__':
     savename = str(input("Please provide the name of the (existing) output folder to which you " +
                          "want to save the output: " or ""))
     df_reviews_in = pd.read_csv(file, compression="gzip")
-    df_reviews = df_reviews_in.drop_duplicates().reset_index()
+    # remove duplicate dows
+    df_reviews_2 = df_reviews_in.loc[df_reviews_in.astype(str).drop_duplicates().index]
+    df_reviews = df_reviews_2.reset_index()
     df_prods = pd.read_pickle(file2, compression="gzip")
     df_prods_mc = run_graph_creation(df_reviews, df_prods, nc)
     try:

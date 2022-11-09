@@ -210,7 +210,9 @@ if __name__ == "__main__":
                           "(Tru/False, default is False)" or False))
     df_prods = pd.read_pickle(file2, compression='gzip')
     df_reviews_in = pd.read_csv(file, compression='gzip')
-    df_reviews = df_reviews_in.drop_duplicates().reset_index()
+    # remove duplicate dows
+    df_reviews_2 = df_reviews_in.loc[df_reviews_in.astype(str).drop_duplicates().index]
+    df_reviews = df_reviews_2.reset_index()
     df_results = run_graph_solver(df_prods, nc, df_reviews, savename, savefigs)
     try:
         bn = os.path.basename(file)
