@@ -64,11 +64,12 @@ def compute_scores(file, nc=8, cs=100, bs=20, trt=0.0):
         print('Computing scores for', file, 'with nc:', nc, 'cs:', cs, 'bs:', bs, 'trt:', trt)
     df = pd.read_json(file, compression='gzip', lines=True)
     df['reviewText'] = df['reviewText'].fillna('')
-    results = preprocess_parallel(df['reviewText'].astype(str), nc, cs, bs, trt)
-    df['ranks'] = [x[0] for x in results]
-    df['n_tokens'] = [len(x[0]) for x in results]
-    df['readability'] = [x[1][0] for x in results]
-    df_prod = pd.DataFrame(df[['asin', 'n_tokens']].groupby(['asin']).sum()).reset_index()
+    df_reviews = df.drop_duplicates().reset_index()
+    results = preprocess_parallel(df_reviews['reviewText'].astype(str), nc, cs, bs, trt)
+    df_reviews['ranks'] = [x[0] for x in results]
+    df_reviews['n_tokens'] = [len(x[0]) for x in results]
+    df_reviews['readability'] = [x[1][0] for x in results]
+    df_prod = pd.DataFrame(df_reviews[['asin', 'n_tokens']].groupby(['asin']).sum()).reset_index()
     df_prod = df_prod.rename(columns={"asin": "prod"})
     df_prod = df_prod.sort_values(by=['n_tokens'], ascending=False)
     indices = list(df_prod.index.values)
@@ -80,7 +81,7 @@ def compute_scores(file, nc=8, cs=100, bs=20, trt=0.0):
         df_prods = pd.DataFrame(df_prod.sort_values(by=['newi']).reset_index()[['prod',
                                                                                 'n_tokens']])
     print("--- %s seconds ---" % (time.time() - start_time))
-    return df, df_prods
+    return df_reviews, df_prods
 
 
 if __name__ == "__main__":

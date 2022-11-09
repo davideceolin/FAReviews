@@ -108,7 +108,8 @@ if __name__ == '__main__':
     nc = int(input('Define number of usable cpu (optional, default is 8): ') or 8)
     savename = str(input("Please provide the name of the (existing) output folder to which you " +
                          "want to save the output: " or ""))
-    df_reviews = pd.read_csv(file, compression="gzip")
+    df_reviews_in = pd.read_csv(file, compression="gzip")
+    df_reviews = df_reviews_in.drop_duplicates().reset_index()
     df_prods = pd.read_pickle(file2, compression="gzip")
     df_prods_mc = run_graph_creation(df_reviews, df_prods, nc)
     try:

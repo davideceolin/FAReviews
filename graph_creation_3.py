@@ -209,8 +209,9 @@ if __name__ == "__main__":
     savefigs = bool(input("Do you want to save the graphs to png per product? "
                           "(Tru/False, default is False)" or False))
     df_prods = pd.read_pickle(file2, compression='gzip')
-    df = pd.read_csv(file, compression='gzip')
-    df_results = run_graph_solver(df_prods, nc, df, savename, savefigs)
+    df_reviews_in = pd.read_csv(file, compression='gzip')
+    df_reviews = df_reviews_in.drop_duplicates().reset_index()
+    df_results = run_graph_solver(df_prods, nc, df_reviews, savename, savefigs)
     try:
         bn = os.path.basename(file)
         output_path = os.path.join(savename, bn[:bn.index('_reviews.')])
