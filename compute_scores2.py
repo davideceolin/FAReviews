@@ -73,9 +73,12 @@ def compute_scores(file, nc=8, cs=100, bs=20, trt=0.0):
     df_reviews['readability'] = [x[1][0] for x in results]
     df_prod = pd.DataFrame(df_reviews[['asin', 'n_tokens']].groupby(['asin']).sum()).reset_index()
     df_prod = df_prod.rename(columns={"asin": "prod"})
+    # Sort based on ntokens for better distribution over cores
     df_prod = df_prod.sort_values(by=['n_tokens'], ascending=False)
     indices = list(df_prod.index.values)
     ni = [indices[i:][::nc] for i in range(nc)]
+    for i in range(1, len(ni), 2):
+        ni[i] = ni[i][::-1]
     nj = [item for i in ni for item in i]
     df_prod['newi'] = None
     for indx, value in enumerate(nj):
@@ -96,8 +99,7 @@ if __name__ == "__main__":
                 "(optional, default is 0.0): ") or 0.0)
     savename = str(input("Please provide the name of the (existing) output folder to which you " +
                          "want to save the output: " or ""))
-    prods, df = compute_scores(file, nc, cs, bs, trt)
-    df_prods = pd.DataFrame({'prod': prods})
+    df, df_prods = compute_scores(file, nc, cs, bs, trt)
     try:
         bn = os.path.basename(file)
         output_path = os.path.join(savename, bn[:bn.index('.')])
