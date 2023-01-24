@@ -213,7 +213,7 @@ if __name__ == "__main__":
     # remove duplicate dows
     df_reviews_2 = df_reviews_in.loc[df_reviews_in.astype(str).drop_duplicates().index]
     df_reviews = df_reviews_2.reset_index()
-    df_results = run_graph_solver(df_prods, nc, df_reviews, savename, savefigs)
+    df_results = run_graph_solver(df_prods, df_reviews, nc, savename, savefigs)
     try:
         bn = os.path.basename(file)
         output_path = os.path.join(savename, bn[:bn.index('_reviews.')])
