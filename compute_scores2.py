@@ -62,7 +62,12 @@ def compute_scores(file, nc=8, cs=100, bs=20, trt=0.0):
         raise ValueError('Cannot find file:', file)
     else:
         print('Computing scores for', file, 'with nc:', nc, 'cs:', cs, 'bs:', bs, 'trt:', trt)
-    df = pd.read_json(file, compression='gzip', lines=True)
+    # try to read json file, lines True/False depends on the orient
+    # (Indication of expected JSON string format)
+    try:
+        df = pd.read_json(file, compression='gzip', lines=False)
+    except Exception:
+        df = pd.read_json(file, compression='gzip', lines=True)
     df['reviewText'] = df['reviewText'].fillna('')
     # remove duplicate dows
     df_reviews_2 = df.loc[df.astype(str).drop_duplicates().index]
