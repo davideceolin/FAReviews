@@ -86,6 +86,8 @@ def run_prolog_solver(df_prods_mc, reviews, nc, savename, savefigs):
     print('Start solving graphs')
     df_results = graph_creation_3.run_graph_solver(df_prods_mc, reviews, nc,
                                                    savename, savefigs)
+    # add trt to output savename
+    savename = savename + '_' + str(trt)
     try:
         bn = os.path.basename(file)
         output_path = os.path.join(savename, bn[:bn.index('.')])
