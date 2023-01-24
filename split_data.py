@@ -1,4 +1,4 @@
-# split data file into a number of separate files 
+# split data file into a number of separate files
 import pandas as pd
 import numpy as np
 import math
@@ -7,7 +7,7 @@ import os
 # review file to split
 file = './Data/AMAZON_FASHION.json.gz'
 # assuming file extension = json.gz, get stem of filename
-outfile_stem = os.path.splitext(os.path.splitext(file)[0])[0] 
+outfile_stem = os.path.splitext(os.path.splitext(file)[0])[0]
 # number of files to split the main file into
 n = 18
 
