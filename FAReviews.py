@@ -80,18 +80,17 @@ def run_graph(reviews, df_prods, num_cores, si, savename):
     return df_prods_mc
 
 
-def run_prolog_solver(df_prods_mc, reviews, nc, savename, savefigs):
+def run_prolog_solver(df_prods_mc, reviews, nc, savename, savefigs, trt):
     import graph_creation_3
     tt = ttime.time()
     print('Start solving graphs')
     df_results = graph_creation_3.run_graph_solver(df_prods_mc, reviews, nc,
                                                    savename, savefigs)
     # add trt to output savename
-    savename = savename + '_' + str(trt)
     try:
         bn = os.path.basename(file)
         output_path = os.path.join(savename, bn[:bn.index('.')])
-        df_results.to_csv(output_path + "_reviews_results.csv", compression='gzip')
+        df_results.to_csv(output_path + "_" + str(trt) + "_reviews_results.csv", compression='gzip')
     except Exception:
         print('Failed to save the output of graph_creation')
     print('Finished solving', ttime.time()-tt)
@@ -108,6 +107,6 @@ if __name__ == "__main__":
         reviews, df_prods = run_compute_scores(file, num_cores, chunk_size, batch_size, trt,
                                                save_intermediate, savename)
         df_prods_mc = run_graph(reviews, df_prods, num_cores, save_intermediate, savename)
-        run_prolog_solver(df_prods_mc, reviews, num_cores, savename, savefigs)
+        run_prolog_solver(df_prods_mc, reviews, num_cores, savename, savefigs, trt)
     end_time = f"{datetime.now():%Y-%m-%d %H:%M:%S}"
     print('End time FAReviews:', end_time, 'duration:', ttime.time()-st)
