@@ -4,34 +4,36 @@
 # 3. compute semantic similarity matrix per product!
 # 4. link
 
-import networkx as nx
-#import duckdb
+# import networkx as nx
+# import duckdb
 import pandas as pd
-import pickle
-from time import time
+# import pickle
+# from time import time
 import gensim
-import logging
+# import logging
 from nltk.corpus import stopwords
-from nltk import download
+# from nltk import download
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_samples, silhouette_score
+# from sklearn.metrics import silhouette_samples
+from sklearn.metrics import silhouette_score
 from numpy import isnan, isinf
-import sys
+# import sys
 import multiprocessing as mp
 import numpy as np
 from functools import partial
 import ast
 import psutil
-from tqdm import tqdm
+# from tqdm import tqdm
 import os
 import gzip
 import json
 import traceback
 
+
 def parse(path):
-  g = gzip.open(path, 'rb')
-  for l in g:
-    yield json.loads(l)
+    g = gzip.open(path, 'rb')
+    for ll in g:
+        yield json.loads(ll)
 
 
 def get_df(path):
@@ -42,12 +44,13 @@ def get_df(path):
         i += 1
     return pd.DataFrame.from_dict(df, orient='index')
 
+
 def distances_matrix(prod, df):
     global model
     k = [x for x in df.loc[df['asin'].str.match(prod), 'ranks']]
     tokens = [y[0].lower().split() for x in k for y in ast.literal_eval(x)]
-    # list(filter(lambda y : y not in stop_words, x)))<---------------------------------------- check
-    tokens = list(set([" ".join(filter(lambda y : y not in stop_words, x)) for x in tokens]))
+    # list(filter(lambda y : y not in stop_words, x)))<--------------------------------------- check
+    tokens = list(set([" ".join(filter(lambda y: y not in stop_words, x)) for x in tokens]))
     # tokens = list(set([" ".join(x) for x in tokens]))
     df_matrix = pd.DataFrame(index=tokens, columns=tokens)
     for x in range(len(tokens)):
@@ -63,7 +66,7 @@ def distances_matrix(prod, df):
 def clusters(prod, df_matrix, df):
     try:
         df_matrix = df_matrix.values[0]
-    except Exception as e:
+    except Exception:
         print(traceback.print_exc())
         print(len(df_matrix))
         print(df_matrix.columns)
@@ -73,37 +76,39 @@ def clusters(prod, df_matrix, df):
     '''try:
         k = [x for x in df.loc[df['asin'].str.contains(prod), 'ranks']]
         tokens = [y[0].lower().split() for x in k for y in ast.literal_eval(x)]
-        tokens = list(set([" ".join(list(filter(lambda y: y not in stop_words, x))) for x in tokens]))
+        tokens = list(set([" ".join(list(filter(lambda y: y not in stop_words, x))) for x in tokens]
+                      ))
     except:
         print("error")
         tokens = []
     '''
     silhouettes = []
     if not df_matrix.empty:
-        l = min(len(df_matrix.index), 10)
-        for i in range(l):
+        max_n_cl = min(len(df_matrix.index), 10)
+        for i in range(max_n_cl):
             cluster = KMeans(n_clusters=(i + 1), random_state=10)
             cluster_labels = cluster.fit_predict(df_matrix)
             try:
                 silhouette_avg = silhouette_score(df_matrix, cluster_labels)
-            except:
+            except Exception:
                 silhouette_avg = 0
             silhouettes.append(silhouette_avg)
         try:
             optimal_clusters = silhouettes.index(max(silhouettes))
             cluster = KMeans(n_clusters=optimal_clusters + 1, random_state=10)
             cluster_labels = cluster.fit_predict(df_matrix)
-        except:
+        except Exception:
             cluster_labels = []
     else:
         cluster_labels = []
     return cluster_labels
 
+
 def get_matrix_and_clusters(prod, df):
     global model
     k = [x for x in df.loc[df['asin'].str.match(prod), 'ranks']]
     tokens = [y[0].lower().split() for x in k for y in ast.literal_eval(x)]
-    tokens = list(set([" ".join(filter(lambda y : y not in stop_words, x)) for x in tokens]))
+    tokens = list(set([" ".join(filter(lambda y: y not in stop_words, x)) for x in tokens]))
     tokens = [x for x in tokens if x != "" and x != " "]
     df_matrix = pd.DataFrame(index=tokens, columns=tokens)
     for x in range(len(tokens)):
@@ -120,28 +125,30 @@ def get_matrix_and_clusters(prod, df):
             cluster_labels = cluster.fit_predict(df_matrix)
             try:
                 silhouette_avg = silhouette_score(df_matrix, cluster_labels)
-            except:
+            except Exception:
                 silhouette_avg = 0
             silhouettes.append(silhouette_avg)
         try:
             optimal_clusters = silhouettes.index(max(silhouettes))
             cluster = KMeans(n_clusters=optimal_clusters + 1, random_state=10)
             cluster_labels = cluster.fit_predict(df_matrix)
-        except:
+        except Exception:
             cluster_labels = []
     else:
         cluster_labels = []
     return (df_matrix, cluster_labels)
 
+
 def add_features(df, ncores, df_reviews):
     psutil.Process().cpu_affinity([ncores])
     print(ncores)
-    #matrix = df['prod'].apply(lambda x: distances_matrix(x, df_reviews))
-    df['matrix','clusters'] = df['prod'].apply(lambda x: get_matrix_and_clusters(x, df_reviews))  #df['prod'].apply(lambda x: distances_matrix(x, df_reviews))
+    # matrix = df['prod'].apply(lambda x: distances_matrix(x, df_reviews))
+    df['matrix', 'clusters'] = df['prod'].apply(lambda x: get_matrix_and_clusters(x, df_reviews))
+    # df['prod'].apply(lambda x: distances_matrix(x, df_reviews))
     print(df)
-    #if matrix.empty:
+    # if matrix.empty:
     #    df['clusters'] = []
-    #else:
+    # else:
     #    df['clusters'] = df['prod'].apply(lambda x: clusters(x, matrix, df_reviews))
     return df
 
@@ -163,10 +170,12 @@ if __name__ == '__main__':
     num_cpus = psutil.cpu_count(logical=False)
     stop_words = stopwords.words('english')
 
-    model = gensim.models.KeyedVectors.load_word2vec_format('GoogleNews-vectors-negative300.bin.gz', binary=True)
+    model = gensim.models.KeyedVectors.load_word2vec_format('GoogleNews-vectors-negative300.bin.gz',
+                                                            binary=True)
     model.init_sims(replace=True)
 
-    files = [dirpath+"/"+file for dirpath, dirnames, filename in os.walk(".") for file in filename if file.endswith("_5_reviews.csv")]
+    files = [dirpath+"/"+file for dirpath, dirnames, filename in os.walk(".")
+             for file in filename if file.endswith("_5_reviews.csv")]
 
     for file in files:
         df = get_df(file.replace("_5_reviews.csv", "_5.json.gz"))

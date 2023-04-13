@@ -1,35 +1,24 @@
-# from compute_scores import Node
-#import pickle5 as pickle
-import pickle
 import pandas as pd
+import time as ttime
 import networkx as nx
 from networkx.readwrite import json_graph
 import ast
-from pengines.Builder import PengineBuilder
-from pengines.Pengine import Pengine
-#from prologterms import TermGenerator, PrologRenderer, Program, Var, Rule, Term, Const
 import math
 from nltk.corpus import stopwords
-import sys
-import json
 import requests
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from operator import itemgetter
 import numpy as np
+import os
+import itertools
+import psutil
+import multiprocessing as mp
+from functools import partial
 
-#P = TermGenerator()
-#Model = Var('Model')
 
-# pickle_off = open("prods_mc.pkl", "rb")
-# df_prods = pickle.load(pickle_off)
-df_prods = pd.read_pickle("1_prods_mc.pkl")
-# df_prods = df_prods.drop(columns=['nodes'])
-# df_prods.to_pickle("prods_mc.pkl")
-df = pd.read_csv("1_reviews.csv", compression='gzip')
 stop_words = stopwords.words('english')
 
-df['solutions'] = "undec"
 
 def color_node(solution):
     if solution == 'undec':
@@ -39,204 +28,196 @@ def color_node(solution):
     else:
         return 'red'
 
-def draw_graph(G, model):
-    print(G.nodes.data())
-    print(G.edges.data())
+
+def draw_graph(G, model, df, savename):
     pos = nx.layout.spring_layout(G)
     node_sizes = [i[1]['weight']*2 for i in G.nodes.data()]
-    #node_sizes = [3 + 10 * i for i in range(len(G))]
-    M = max(G.edges.data(), key=itemgetter(1))[1]
-
-    #M = G.number_of_edges()
-    edge_colors = np.argsort([x[2]['weight'] for x in G.edges.data()]) # range(2, M + 2)
-    sol = [df.loc[(df['asin'] == x[0].split("_")[0]) & (df['reviewerID'] == x[0].split("_")[1]),'solutions'].apply(color_node).values.tolist() for x in G.nodes.data()]
+    M = max(G.edges.data(), key=itemgetter(1))[1]  # noqa: F841
+    edge_colors = np.argsort([x[2]['weight'] for x in G.edges.data()])  # range(2, M + 2)
+    sol = [df.loc[(df['asin'] == x[0].split("_")[0]) & (df['reviewerID'] == x[0].split("_")[1]),
+           'solutions'].apply(color_node).values.tolist() for x in G.nodes.data()]
     sol = [y[0] for y in sol]
-    print(sol)
-    nodes = nx.draw_networkx_nodes(G, pos, node_size=node_sizes, node_color=sol)
+    nodes = nx.draw_networkx_nodes(G, pos, node_size=node_sizes, node_color=sol)  # noqa: F841
     edges = nx.draw_networkx_edges(G, pos, node_size=node_sizes, arrowstyle='->',
                                    arrowsize=10, edge_color=edge_colors,
                                    edge_cmap=plt.cm.Blues, width=2)
+    ax = plt.gca()
+    ax.set_axis_off()
     pc = mpl.collections.PatchCollection(edges, cmap=plt.cm.Blues)
     pc.set_array(edge_colors)
     plt.colorbar(pc)
-    ax = plt.gca()
-    ax.set_axis_off()
     prod_id = list(G.nodes())[0].split("_")[0]
-    plt.savefig(prod_id+'.png', bbox_inches='tight')
+    plt.savefig(os.path.join(savename, prod_id+'.png'), bbox_inches='tight')
     nx.draw_networkx_labels(G, pos, G.nodes, font_size=8)
-    p = plt.savefig(prod_id+'_labels.png', bbox_inches='tight')
+    p = plt.savefig(os.path.join(savename, prod_id+'_labels.png'), bbox_inches='tight')
     plt.clf()
     plt.close(p)
 
-def solve_argumentation_graph(G):
-    prog = []
-    edges = [x for x in G.edges()]
-    print("edges:")
-    print(edges)
-    if isinstance(G, nx.DiGraph):
-        for pair in edges:
-            prog.append(Const(pair[0].lower()) >> Const(pair[1].lower()))
-    elif isinstance(G, nx.Graph):
-        for line in edges:
-            for pair in line:
-                prog.append(Const(pair[0].lower()) >> Const(pair[1].lower()))
-    return prog
 
 def solve_argumentation_graph_json(G):
     data = json_graph.node_link_data(G)
     r = requests.post('http://localhost:3333/argue', json=data)
     return r.json()
 
-df_results = pd.DataFrame(columns=["prodID", "solutions"])
 
-for index, row in df_prods.iterrows():
-    df_reviews = pd.DataFrame(columns=['reviewID', 'score', 'token', 'importance', 'readability', 'cluster'])
+def run_solver(prod, mc, df, savename, savefigs):
+    matrix = mc[0]
+    cluster_prod = mc[1]
+    # lists that will collect all tokens & info of one product
+    reviewID = []
+    score = []
+    tokens = []
+    importance = []
+    readability = []
+    clusters = []
     G = nx.DiGraph()
-    #R = PrologRenderer()
-    #p = Program(
-    #    Rule(r'', body=P.include('argue'))
-    #)
-    # for cluster in list(set(row['clusters'])):
-    # indexes = [i for i, x in enumerate(row['clusters']) if x == cluster]
-    # tok = " ".join([filter(lambda y: y not in stop_words, x) for x in z.lower().split() for z in row['matrix']
-    # .columns[indexes]])
-    for id, review in df.loc[df['asin'] == row['prod']].iterrows():
-        ranks = ast.literal_eval(review['ranks'])
-        readability = review['readability']
-        score = review['overall']
-        reviewID = review['asin'] + "_" + review['reviewerID'] + "_" + str(review['unixReviewTime'])
-        for token in ranks:
-            tok = " ".join([x for x in token[0].lower().split() if x not in stop_words])
-            if tok == "" or tok == " ":
-                continue
+    # Get all info of prod and convert data into lists
+    prod_reviews = pd.DataFrame(df[df['asin'] == prod])
+    ranks_prod = [ast.literal_eval(str(rank)) for rank in prod_reviews['ranks'].to_numpy()]
+    readability_prod = prod_reviews['readability'].to_list()
+    score_prod = prod_reviews['overall'].to_list()
+    reviewID_prod = (prod_reviews['asin'] + '_' + prod_reviews['reviewerID'] + '_' +
+                     prod_reviews['unixReviewTime'].map(str)).to_numpy(dtype=str)
+    # Determine per review the individual tokens and accompanying info, and append those
+    # to the corresponding lists that are collecting all tokens & info of one product
+    for r, ranks in enumerate(ranks_prod):
+        tokens_imp = [[" ".join([x for x in token[0].lower().split() if x not in stop_words]),
+                      token[1]] for token in ranks]
+        tokens_imp = [i for i in tokens_imp if i[0] not in ("", " ")]
+        toks = [i[0] for i in tokens_imp]
+        imps = [i[1] for i in tokens_imp]
+        clusters_toks = [cluster_prod[matrix.columns.get_loc(token)]
+                         if token in list(matrix.columns) else 0 for token in toks]
+        reviewID.extend([reviewID_prod[r]]*len(toks))
+        score.extend([score_prod[r]]*len(toks))
+        tokens.extend(toks)
+        importance.extend(imps)
+        readability.extend([readability_prod[r]]*len(toks))
+        clusters.extend(clusters_toks)
+    for i, j in itertools.product(list(range(len(tokens))), repeat=2):
+        if (reviewID[i] != reviewID[j] and
+            score[i] != score[j] and
+                clusters[i] == clusters[j]):
+            if not G.has_node(reviewID[i]):
+                G.add_node(reviewID[i], weight=readability[i])
+            if not G.has_node(reviewID[j]):
+                G.add_node(reviewID[j], weight=readability[j])
             try:
-                cluster = row[('matrix', 'clusters')][1][row[('matrix', 'clusters')][0].columns.get_loc(tok)]
-            except:
-                cluster = 0
-            df_reviews = df_reviews.append(
-                {'reviewID': reviewID, 'score': score, 'token': tok, 'importance': token[1], 'readability': readability,
-                 'cluster': cluster}, ignore_index=True)
-    # print("df_reviews")
-    # print(df_reviews)
-    for id1, token1 in df_reviews.iterrows():
-        for id2, token2 in df_reviews.iterrows():
-            if token1['reviewID'] != token2['reviewID'] and token1['score'] != token2['score'] and token1['cluster'] == \
-                    token2['cluster']:
-                if not G.has_node(token1['reviewID']):
-                    G.add_node(token1['reviewID'], weight=token1['readability'])
-                if not G.has_node(token2['reviewID']):
-                    G.add_node(token2['reviewID'], weight=token2['readability'])
-                try:
-                    w1 = token1['readability'] * token1['importance']
-                except:
-                    w1 = 0
-                try:
-                    w2 = token2['readability'] * token2['importance']
-                except:
-                    w2 = 0
-                w1 = 0 if math.isnan(w1) else w1
-                w2 = 0 if math.isnan(w2) else w2
-                try:
-                    sim_t1_t2 = row['matrix'].at[token1['token'], token2['token']]
-                except:
-                    sim_t1_t2 = 0
-                weight = 0
-                if w1 > w2:
-                    if G.has_edge(token1['reviewID'], token2['reviewID']):
-                        weight = int(G.get_edge_data(token1['reviewID'], token2['reviewID'], 'weight')['weight'])
-                        G.remove_edge(token1['reviewID'], token2['reviewID'])
-                        G.add_edge(token1['reviewID'], token2['reviewID'], weight=weight + (w1 - w2) * sim_t1_t2)
-                    elif G.has_edge(token2['reviewID'], token1['reviewID']):
-                        weight = int(G.get_edge_data(token2['reviewID'], token1['reviewID'], 'weight')['weight']) * -1
-                        weight = weight + (w1 - w2) * sim_t1_t2
-                        if weight > 0:
-                            G.remove_edge(token2['reviewID'], token1['reviewID'])
-                            G.add_edge(token1['reviewID'], token2['reviewID'], weight=weight)
-                        else:
-                            if G.has_edge(token1['reviewID'], token2['reviewID']):
-                                G.remove_edge(token1['reviewID'], token2['reviewID'])
-                            G.add_edge(token2['reviewID'], token1['reviewID'], weight=weight * -1)
+                w1 = readability[i] * importance[i]
+            except Exception:
+                w1 = 0
+            try:
+                w2 = readability[j] * importance[j]
+            except Exception:
+                w2 = 0
+            w1 = 0 if math.isnan(w1) else w1
+            w2 = 0 if math.isnan(w2) else w2
+            try:
+                sim_t1_t2 = matrix.at[tokens[i], tokens[j]]
+            except Exception:
+                sim_t1_t2 = 0
+            weight = 0
+            if w1 > w2:
+                if G.has_edge(reviewID[i], reviewID[j]):
+                    weight = int(G.get_edge_data(reviewID[i], reviewID[j],
+                                 'weight')['weight'])
+                    G.remove_edge(reviewID[i], reviewID[j])
+                    G.add_edge(reviewID[i], reviewID[j],
+                               weight=weight + (w1 - w2) * sim_t1_t2)
+                elif G.has_edge(reviewID[j], reviewID[i]):
+                    weight = int(G.get_edge_data(reviewID[j], reviewID[i],
+                                 'weight')['weight']) * -1
+                    weight = weight + (w1 - w2) * sim_t1_t2
+                    if weight > 0:
+                        G.remove_edge(reviewID[j], reviewID[i])
+                        G.add_edge(reviewID[i], reviewID[j], weight=weight)
                     else:
-                        G.add_edge(token1['reviewID'], token2['reviewID'], weight=weight + (w1 - w2) * sim_t1_t2)
-                elif w2 > w1:
-                    if G.has_edge(token2['reviewID'], token1['reviewID']):
-                        weight = int(G.get_edge_data(token2['reviewID'], token1['reviewID'], 'weight')['weight'])
-                        G.remove_edge(token2['reviewID'], token1['reviewID'])
-                        G.add_edge(token2['reviewID'], token1['reviewID'], weight=weight + (w2 - w1) * sim_t1_t2)
-                    elif G.has_edge(token1['reviewID'], token2['reviewID']):
-                        weight = int(G.get_edge_data(token1['reviewID'], token2['reviewID'], 'weight')['weight']) * -1
-                        weight = weight + (w2 - w1) * sim_t1_t2
-                        if weight > 0:
-                            G.remove_edge(token1['reviewID'], token2['reviewID'])
-                            G.add_edge(token2['reviewID'], token1['reviewID'], weight=weight)
-                        else:
-                            if G.has_edge(token2['reviewID'], token1['reviewID']):
-                                G.remove_edge(token2['reviewID'], token1['reviewID'])
-                            G.add_edge(token1['reviewID'], token2['reviewID'], weight=weight * -1)
+                        if G.has_edge(reviewID[i], reviewID[j]):
+                            G.remove_edge(reviewID[i], reviewID[j])
+                        G.add_edge(reviewID[j], reviewID[i],
+                                   weight=weight * -1)
+                else:
+                    G.add_edge(reviewID[i], reviewID[j],
+                               weight=weight + (w1 - w2) * sim_t1_t2)
+            elif w2 > w1:
+                if G.has_edge(reviewID[j], reviewID[i]):
+                    weight = int(G.get_edge_data(reviewID[j], reviewID[i],
+                                 'weight')['weight'])
+                    G.remove_edge(reviewID[j], reviewID[i])
+                    G.add_edge(reviewID[j], reviewID[i],
+                               weight=weight + (w2 - w1) * sim_t1_t2)
+                elif G.has_edge(reviewID[i], reviewID[j]):
+                    weight = int(G.get_edge_data(reviewID[i], reviewID[j],
+                                 'weight')['weight']) * -1
+                    weight = weight + (w2 - w1) * sim_t1_t2
+                    if weight > 0:
+                        G.remove_edge(reviewID[i], reviewID[j])
+                        G.add_edge(reviewID[j], reviewID[i], weight=weight)
                     else:
-                        G.add_edge(token2['reviewID'], token1['reviewID'], weight=weight + (w2 - w1) * sim_t1_t2)
-
-            # else:
-            #     if G.has_edge(token1['reviewID'],token2['reviewID']):
-            #         weight = int(G.get_edge_data(token1['reviewID'], token2['reviewID'], 'weight')['weight'])
-            #     G.add_edge(token1['reviewID'], token2['reviewID'],weight= weight + w1 * sim_t1_t2)
-            #     if G.has_edge(token1['reviewID'],token2['reviewID']):
-            #         weight = int(G.get_edge_data(token1['reviewID'], token2['reviewID'], 'weight')['weight'])
-            #     G.add_edge(token1['reviewID'], token2['reviewID'],weight= weight + w2 * sim_t1_t2)
-
-    #prog = solve_argumentation_graph(G)
-    # print("prog:")
-    # print(prog)
-    #q = P.edges_model(prog, Model)
-    '''
-    factory = PengineBuilder(urlserver="https://swish.swi-prolog.org/", srctext=R.render(p), ask=R.render(q),
-                             application='swish')
-    try:
-        pengine = Pengine(builder=factory, debug=True)
-
-        while pengine.currentQuery.hasMore:
-            pengine.doNext(pengine.currentQuery)
-        for p in pengine.currentQuery.availProofs:
-            df_results = df_results.append({'prodID': row['prod'], ' solutions': p[Model.name]}, ignore_index=True)
-            for res in p[Model.name]:
-                #print(str(res))
-                res = json.loads(str(res).replace("\'", "\""))
-                prodID = res['args'][0].split("_")[0].upper()
-                reviewerID = res['args'][0].split("_")[1].upper()
-                df.loc[(df['asin'] >= prodID) & (df['reviewerID'] <= reviewerID)] = res['args'][1]
-            print('{}'.format(p[Model.name]))
-    except:
-        print(sys.exc_info())
-        df_results = df_results.append({'prodID': row['prod'], 'solutions': 'Error'}, ignore_index=True)
-        print('Error')
-    '''
+                        if G.has_edge(reviewID[j], reviewID[i]):
+                            G.remove_edge(reviewID[j], reviewID[i])
+                        G.add_edge(reviewID[i], reviewID[j],
+                                   weight=weight * -1)
+                else:
+                    G.add_edge(reviewID[j], reviewID[i],
+                               weight=weight + (w2 - w1) * sim_t1_t2)
     r = solve_argumentation_graph_json(G)
-    if 'models' in r and len(r['models'])>0:
+    if 'models' in r and len(r['models']) > 0:
         models = r['models']
         weights = [0 for x in r['models']]
         for i in range(len(models)):
             for node in models[i]['nodes']:
                 if node['state'] == 'in':
                     prodID, reviewerID, time = node['id'].upper().split("_")
-                    weights[i] = weights[i] + node['weight'] # df.loc[(df['asin'] == prodID) & (df['reviewerID'] == reviewerID), 'readability'].iloc[0]
-                    # print(df.loc[(df['asin'] == prodID) & (df['reviewerID'] == reviewerID), 'readability'])
+                    weights[i] = weights[i] + node['weight']
         model = models[weights.index(max(weights))]
         for node in model['nodes']:
-            prodID, reviewerID, time = node['id'].upper().split("_")
-            df.loc[(df['asin'] == prodID) & (df['reviewerID'] == reviewerID),'solutions'] = node['state']
-        draw_graph(G, model)
-        #df_results.to_pickle("results.pkl")
-        #df.to_csv("reviews_res.csv")
+            reviewerID = node['id'].upper().split("_")[1]
+            prod_reviews.loc[prod_reviews['reviewerID'] == reviewerID, 'solutions'] = node['state']
+        if savefigs:
+            draw_graph(G, model, prod_reviews, savename)
+    return prod_reviews
 
-df_results.to_pickle("results.pkl")
-df.to_csv("reviews_res.csv")
-# import sys
 
-# import matplotlib.pyplot as plt
-# import networkx as nx
+def parallelize_run_solver(p_run_solver, prods, mc_m, mc_c, n_cores):
+    pool = mp.Pool(n_cores)
+    mc = zip(mc_m, mc_c)
+    df_results = pd.concat(pool.starmap(p_run_solver, zip(prods, mc)))
+    pool.close()
+    pool.join()
+    return df_results
 
-# G = nx.DiGraph()
-# G.add_edge(1, 2)
-# G.add_edge(3, 2)
 
-# prog = []
+def run_graph_solver(df_prods, df_reviews, nc, savename, savefigs):
+    df_reviews['solutions'] = "undec"
+    p_run_solver = partial(run_solver, df=df_reviews, savename=savename, savefigs=savefigs)
+    prods = df_prods['prod'].to_list()
+    mc_matrix = df_prods['matrix'].to_list()
+    mc_cluster = df_prods['clusters'].to_list()
+    df_results = parallelize_run_solver(p_run_solver, prods, mc_matrix, mc_cluster, nc)
+    return df_results.sort_index()
+
+
+if __name__ == "__main__":
+    t1 = ttime.time()
+    file = input('Please provide the file path (csv) for the input data (reviews): ')
+    file2 = input('Please provide the file path (pkl) for the input data (mc product list): ')
+    print('Your logical CPU count is:', psutil.cpu_count(logical=True))
+    nc = int(input('Define number of usable cpu (optional, default is 8): ') or 8)
+    savename = str(input("Please provide the name of the (existing) output folder to which you " +
+                         "want to save the output: " or ""))
+    savefigs = bool(input("Do you want to save the graphs to png per product? "
+                          "(Tru/False, default is False)" or False))
+    df_prods = pd.read_pickle(file2, compression='gzip')
+    df_reviews_in = pd.read_csv(file, compression='gzip')
+    # remove duplicate dows
+    df_reviews_2 = df_reviews_in.loc[df_reviews_in.astype(str).drop_duplicates().index]
+    df_reviews = df_reviews_2.reset_index()
+    df_results = run_graph_solver(df_prods, df_reviews, nc, savename, savefigs)
+    try:
+        bn = os.path.basename(file)
+        output_path = os.path.join(savename, bn[:bn.index('_reviews.')])
+        df_results.to_csv(output_path + "_reviews_results.csv", compression='gzip')
+    except Exception:
+        print('Failed to save the output of graph_creation')
+    print('Duration:', ttime.time()-t1)
