@@ -8,13 +8,12 @@ GoogleNews-vectors-negative300.bin.gz
 1_*
 
 # Folders
-Tests/*
-Data*
-Output*
+/*/
+!./argue
 
 # Mac
 .DS_Store
 
 # Performance tests
-test_*
+test*
 *.lprof
