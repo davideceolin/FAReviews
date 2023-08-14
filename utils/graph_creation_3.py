@@ -29,16 +29,16 @@ def color_node(solution):
         return 'red'
 
 
-def draw_graph(G, model, df, savename):
-    pos = nx.layout.spring_layout(G)
-    node_sizes = [i[1]['weight']*2 for i in G.nodes.data()]
-    M = max(G.edges.data(), key=itemgetter(1))[1]  # noqa: F841
-    edge_colors = np.argsort([x[2]['weight'] for x in G.edges.data()])  # range(2, M + 2)
+def draw_graph(g, model, df, savename):
+    pos = nx.layout.spring_layout(g)
+    node_sizes = [i[1]['weight']*2 for i in g.nodes.data()]
+    m = max(g.edges.data(), key=itemgetter(1))[1]  # noqa: F841
+    edge_colors = np.argsort([x[2]['weight'] for x in g.edges.data()])  # range(2, m + 2)
     sol = [df.loc[(df['asin'] == x[0].split("_")[0]) & (df['reviewerID'] == x[0].split("_")[1]),
-           'solutions'].apply(color_node).values.tolist() for x in G.nodes.data()]
+           'solutions'].apply(color_node).values.tolist() for x in g.nodes.data()]
     sol = [y[0] for y in sol]
-    nodes = nx.draw_networkx_nodes(G, pos, node_size=node_sizes, node_color=sol)  # noqa: F841
-    edges = nx.draw_networkx_edges(G, pos, node_size=node_sizes, arrowstyle='->',
+    nodes = nx.draw_networkx_nodes(g, pos, node_size=node_sizes, node_color=sol)  # noqa: F841
+    edges = nx.draw_networkx_edges(g, pos, node_size=node_sizes, arrowstyle='->',
                                    arrowsize=10, edge_color=edge_colors,
                                    edge_cmap=plt.cm.Blues, width=2)
     ax = plt.gca()
@@ -46,16 +46,16 @@ def draw_graph(G, model, df, savename):
     pc = mpl.collections.PatchCollection(edges, cmap=plt.cm.Blues)
     pc.set_array(edge_colors)
     plt.colorbar(pc)
-    prod_id = list(G.nodes())[0].split("_")[0]
+    prod_id = list(g.nodes())[0].split("_")[0]
     plt.savefig(os.path.join(savename, prod_id+'.png'), bbox_inches='tight')
-    nx.draw_networkx_labels(G, pos, G.nodes, font_size=8)
+    nx.draw_networkx_labels(g, pos, g.nodes, font_size=8)
     p = plt.savefig(os.path.join(savename, prod_id+'_labels.png'), bbox_inches='tight')
     plt.clf()
     plt.close(p)
 
 
-def solve_argumentation_graph_json(G):
-    data = json_graph.node_link_data(G)
+def solve_argumentation_graph_json(g):
+    data = json_graph.node_link_data(g)
     r = requests.post('http://localhost:3333/argue', json=data)
     return r.json()
 
@@ -64,20 +64,20 @@ def run_solver(prod, mc, df, savename, savefigs):
     matrix = mc[0]
     cluster_prod = mc[1]
     # lists that will collect all tokens & info of one product
-    reviewID = []
+    review_id = []
     score = []
     tokens = []
     importance = []
     readability = []
     clusters = []
-    G = nx.DiGraph()
+    g = nx.DiGraph()
     # Get all info of prod and convert data into lists
     prod_reviews = pd.DataFrame(df[df['asin'] == prod])
     ranks_prod = [ast.literal_eval(str(rank)) for rank in prod_reviews['ranks'].to_numpy()]
     readability_prod = prod_reviews['readability'].to_list()
     score_prod = prod_reviews['overall'].to_list()
-    reviewID_prod = (prod_reviews['asin'] + '_' + prod_reviews['reviewerID'] + '_' +
-                     prod_reviews['unixReviewTime'].map(str)).to_numpy(dtype=str)
+    review_id_prod = (prod_reviews['asin'] + '_' + prod_reviews['reviewerID'] + '_' +
+                      prod_reviews['unixReviewTime'].map(str)).to_numpy(dtype=str)
     # Determine per review the individual tokens and accompanying info, and append those
     # to the corresponding lists that are collecting all tokens & info of one product
     for r, ranks in enumerate(ranks_prod):
@@ -88,20 +88,20 @@ def run_solver(prod, mc, df, savename, savefigs):
         imps = [i[1] for i in tokens_imp]
         clusters_toks = [cluster_prod[matrix.columns.get_loc(token)]
                          if token in list(matrix.columns) else 0 for token in toks]
-        reviewID.extend([reviewID_prod[r]]*len(toks))
+        review_id.extend([review_id_prod[r]]*len(toks))
         score.extend([score_prod[r]]*len(toks))
         tokens.extend(toks)
         importance.extend(imps)
         readability.extend([readability_prod[r]]*len(toks))
         clusters.extend(clusters_toks)
     for i, j in itertools.product(list(range(len(tokens))), repeat=2):
-        if (reviewID[i] != reviewID[j] and
+        if (review_id[i] != review_id[j] and
             score[i] != score[j] and
                 clusters[i] == clusters[j]):
-            if not G.has_node(reviewID[i]):
-                G.add_node(reviewID[i], weight=readability[i])
-            if not G.has_node(reviewID[j]):
-                G.add_node(reviewID[j], weight=readability[j])
+            if not g.has_node(review_id[i]):
+                g.add_node(review_id[i], weight=readability[i])
+            if not g.has_node(review_id[j]):
+                g.add_node(review_id[j], weight=readability[j])
             try:
                 w1 = readability[i] * importance[i]
             except Exception:
@@ -118,64 +118,64 @@ def run_solver(prod, mc, df, savename, savefigs):
                 sim_t1_t2 = 0
             weight = 0
             if w1 > w2:
-                if G.has_edge(reviewID[i], reviewID[j]):
-                    weight = int(G.get_edge_data(reviewID[i], reviewID[j],
+                if g.has_edge(review_id[i], review_id[j]):
+                    weight = int(g.get_edge_data(review_id[i], review_id[j],
                                  'weight')['weight'])
-                    G.remove_edge(reviewID[i], reviewID[j])
-                    G.add_edge(reviewID[i], reviewID[j],
+                    g.remove_edge(review_id[i], review_id[j])
+                    g.add_edge(review_id[i], review_id[j],
                                weight=weight + (w1 - w2) * sim_t1_t2)
-                elif G.has_edge(reviewID[j], reviewID[i]):
-                    weight = int(G.get_edge_data(reviewID[j], reviewID[i],
+                elif g.has_edge(review_id[j], review_id[i]):
+                    weight = int(g.get_edge_data(review_id[j], review_id[i],
                                  'weight')['weight']) * -1
                     weight = weight + (w1 - w2) * sim_t1_t2
                     if weight > 0:
-                        G.remove_edge(reviewID[j], reviewID[i])
-                        G.add_edge(reviewID[i], reviewID[j], weight=weight)
+                        g.remove_edge(review_id[j], review_id[i])
+                        g.add_edge(review_id[i], review_id[j], weight=weight)
                     else:
-                        if G.has_edge(reviewID[i], reviewID[j]):
-                            G.remove_edge(reviewID[i], reviewID[j])
-                        G.add_edge(reviewID[j], reviewID[i],
+                        if g.has_edge(review_id[i], review_id[j]):
+                            g.remove_edge(review_id[i], review_id[j])
+                        g.add_edge(review_id[j], review_id[i],
                                    weight=weight * -1)
                 else:
-                    G.add_edge(reviewID[i], reviewID[j],
+                    g.add_edge(review_id[i], review_id[j],
                                weight=weight + (w1 - w2) * sim_t1_t2)
             elif w2 > w1:
-                if G.has_edge(reviewID[j], reviewID[i]):
-                    weight = int(G.get_edge_data(reviewID[j], reviewID[i],
+                if g.has_edge(review_id[j], review_id[i]):
+                    weight = int(g.get_edge_data(review_id[j], review_id[i],
                                  'weight')['weight'])
-                    G.remove_edge(reviewID[j], reviewID[i])
-                    G.add_edge(reviewID[j], reviewID[i],
+                    g.remove_edge(review_id[j], review_id[i])
+                    g.add_edge(review_id[j], review_id[i],
                                weight=weight + (w2 - w1) * sim_t1_t2)
-                elif G.has_edge(reviewID[i], reviewID[j]):
-                    weight = int(G.get_edge_data(reviewID[i], reviewID[j],
+                elif g.has_edge(review_id[i], review_id[j]):
+                    weight = int(g.get_edge_data(review_id[i], review_id[j],
                                  'weight')['weight']) * -1
                     weight = weight + (w2 - w1) * sim_t1_t2
                     if weight > 0:
-                        G.remove_edge(reviewID[i], reviewID[j])
-                        G.add_edge(reviewID[j], reviewID[i], weight=weight)
+                        g.remove_edge(review_id[i], review_id[j])
+                        g.add_edge(review_id[j], review_id[i], weight=weight)
                     else:
-                        if G.has_edge(reviewID[j], reviewID[i]):
-                            G.remove_edge(reviewID[j], reviewID[i])
-                        G.add_edge(reviewID[i], reviewID[j],
+                        if g.has_edge(review_id[j], review_id[i]):
+                            g.remove_edge(review_id[j], review_id[i])
+                        g.add_edge(review_id[i], review_id[j],
                                    weight=weight * -1)
                 else:
-                    G.add_edge(reviewID[j], reviewID[i],
+                    g.add_edge(review_id[j], review_id[i],
                                weight=weight + (w2 - w1) * sim_t1_t2)
-    r = solve_argumentation_graph_json(G)
+    r = solve_argumentation_graph_json(g)
     if 'models' in r and len(r['models']) > 0:
         models = r['models']
         weights = [0 for x in r['models']]
         for i in range(len(models)):
             for node in models[i]['nodes']:
                 if node['state'] == 'in':
-                    prodID, reviewerID, time = node['id'].upper().split("_")
+                    prod_id, reviewer_id, time = node['id'].upper().split("_")
                     weights[i] = weights[i] + node['weight']
         model = models[weights.index(max(weights))]
         for node in model['nodes']:
-            reviewerID = node['id'].upper().split("_")[1]
-            prod_reviews.loc[prod_reviews['reviewerID'] == reviewerID, 'solutions'] = node['state']
+            reviewer_id = node['id'].upper().split("_")[1]
+            prod_reviews.loc[prod_reviews['reviewerID'] == reviewer_id, 'solutions'] = node['state']
         if savefigs:
-            draw_graph(G, model, prod_reviews, savename)
+            draw_graph(g, model, prod_reviews, savename)
     return prod_reviews
 
 
