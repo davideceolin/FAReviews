@@ -4,7 +4,7 @@ import time as ttime
 from argparse import RawTextHelpFormatter
 from datetime import datetime
 
-from compute_scores2 import compute_scores
+from utils.compute_scores2 import compute_scores
 
 
 def main():
@@ -64,7 +64,7 @@ def run_compute_scores(infile, nc, cs, bs, trt, si, savename):
 
 
 def run_graph(reviews, df_prods, num_cores, si, savename):
-    from graph_creation3 import run_graph_creation
+    from utils.graph_creation3 import run_graph_creation
     print('Start calculating matrices and clusters')
     tt = ttime.time()
     df_prods_mc = run_graph_creation(reviews, df_prods, num_cores)
@@ -81,7 +81,7 @@ def run_graph(reviews, df_prods, num_cores, si, savename):
 
 
 def run_prolog_solver(df_prods_mc, reviews, nc, savename, savefigs, trt):
-    import graph_creation_3
+    import utils.graph_creation_3 as graph_creation_3
     tt = ttime.time()
     print('Start solving graphs')
     df_results = graph_creation_3.run_graph_solver(df_prods_mc, reviews, nc,
