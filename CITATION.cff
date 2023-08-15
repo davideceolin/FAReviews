@@ -1,0 +1,22 @@
+# YAML 1.2
+---
+authors:
+  -
+    family-names: Ceolin
+    given-names: Davide
+    orcid: "https://orcid.org/0000-0002-3357-9130"
+  -
+    family-names: Ootes
+    given-names: Laura
+    orcid: "https://orcid.org/0000-0002-2800-8309"
+cff-version: "1.2.0"
+title: "FAReviews"
+license: Apache-2.0
+# date-released: 
+# doi: 10.0000/FIXME
+version: "0.1.0"
+repository-code: "https://github.com/davideceolin/FAReviews"
+keywords:
+  - Argumentation reasoning
+message: "If you use this software, please cite it using these metadata."
+
