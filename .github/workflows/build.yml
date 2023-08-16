@@ -2,9 +2,9 @@ name: build
 
 on:
   push:
-    branches: [ "master" , "19-create-a-build-action"]
+    branches: [ "master"]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master"]
 
 jobs:
 
