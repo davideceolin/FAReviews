@@ -37,7 +37,7 @@ jobs:
     - name: Run unit tests
       run: |
         pip install pytest pytest-cov
-        run: python -m pytest --cov --cov-report term --cov-report xml --cov-report html --junitxml=xunit-result.xml ./tests
+        python -m pytest --cov --cov-report term --cov-report xml --cov-report html --junitxml=xunit-result.xml ./tests
 
 # uncomment when project has been added to coveralls and the COVERALLS_REPO_TOKEN has been added to secrets 
 #    - name: Coveralls GitHub Action
