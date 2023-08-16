@@ -8,7 +8,6 @@ GoogleNews-vectors-negative300.bin.gz
 1_*
 
 # Folders
-Tests/*
 Data*
 Output*
 
@@ -16,5 +15,4 @@ Output*
 .DS_Store
 
 # Performance tests
-test_*
 *.lprof
