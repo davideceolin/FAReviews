@@ -3,8 +3,7 @@
 [![fair-software.eu](https://img.shields.io/badge/fair--software.eu-%E2%97%8F%20%20%E2%97%8B%20%20%E2%97%8B%20%20%E2%97%8B%20%20%E2%97%8B-red)](https://fair-software.eu)
 [![markdown-link-check](https://github.com/davideceolin/FAReviews/actions/workflows/markdown-link-check.yml/badge.svg)](https://github.com/davideceolin/FAReviews/actions/workflows/markdown-link-check.yml)
 
-## Description
-
+# FAReviews
 
 ## Prerequisites
 FAReviews uses [python3](https://www.python.org) for argumentation mining and [prolog](https://www.swi-prolog.org) for argument reasoning. The required prolog scripts can be found in the folder "argue".
