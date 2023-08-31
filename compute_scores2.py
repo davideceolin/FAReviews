@@ -13,35 +13,45 @@ from spacy_readability import Readability
 # Load nlp model
 @Language.component("readability")
 def readability(doc):
+    """
+    Set up the readability component for the nlp pipeline.
+    """
     read = Readability()
     doc = read(doc)
     return doc
 
-
+# set up the nlp pipeline
 nlp = spacy.load('en_core_web_md')
 nlp.add_pipe("textrank", last=True)
 nlp.add_pipe("readability", last=True)
 
 
 def apply_ranking(doc, trt):
+    """Return a list with only the tokens that have a textrankscore above the treshold."""
     return [(str(x.text), x.rank) for x in doc._.phrases if x.rank >= trt]
 
 
 def apply_readability(doc):
+    "Determine the Flesch-Kincaid readability score for a given text."
     return doc._.flesch_kincaid_reading_ease
 
 
 def chunker(iterable, total_length, chunksize):
+    "Split the data into chunck of size chunksize."
     x = [iterable[pos: pos + chunksize] for pos in range(0, total_length, chunksize)]
     return x
 
 
 def flatten(list_of_lists):
-    "Flatten a list of lists to a combined list"
+    "Flatten a list of lists."
     return [item for sublist in list_of_lists for item in sublist]
 
 
 def process_chunk(texts, bs, trt):
+    """
+    Process a given chuck of data. For each text element (product review) in the chuck,
+    the readability score and ranked tokens are calculated.
+    """
     preproc_pipe = []
     for doc in nlp.pipe(texts, batch_size=bs):
         preproc_pipe.append([apply_ranking(doc, trt), [apply_readability(doc)]])
@@ -49,6 +59,10 @@ def process_chunk(texts, bs, trt):
 
 
 def preprocess_parallel(texts, n_jobs, chunksize, batchsize, trt):
+    """
+    Setup the parallel processing: the analysis of all product reviews is split into chuncks,
+    and the different chunks are processed in parallel.
+    """
     executor = Parallel(n_jobs=n_jobs, backend='multiprocessing', prefer="processes")
     do = delayed(process_chunk)
     tasks = (do(chunk, batchsize, trt) for chunk in chunker(texts, len(texts), chunksize=chunksize))
@@ -57,6 +71,30 @@ def preprocess_parallel(texts, n_jobs, chunksize, batchsize, trt):
 
 
 def compute_scores(file, nc=8, cs=100, bs=20, trt=0.0):
+    """
+    Compute scores and preprocess review data from a given file.
+
+    This function reads review data from a JSON file, preprocesses the data in parallel
+    using the specified number of clusters, chunck size, and batch size, calculates for each review:
+    - ranks
+    - number of tokens
+    - readability score
+    Then aggregates per product number (asin), the total number of tokens along all reviews of that product
+
+    Args:
+        file (str): Path to the JSON file containing review data.
+        nc (int, optional): Number of cores for parallel processing (default is 8).
+        cs (int, optional): Chunk size for parallel processing (default is 100).
+        bs (int, optional): Batch size for processing (default is 20).
+        trt (float, optional): Minimum textrank score threshold for the tokens to be used (default is 0.0).
+
+    Returns:
+        tuple: A tuple containing two pandas DataFrames:
+            - df_reviews: reviews dr with processed review data with for each review the
+            calculated readability score and extracted text tokens (on which a trt selecting is applied).
+            - df_prods: product number with per product the total number of tokens.
+    """
+
     start_time = time.time()
     if not os.path.exists(file):
         raise ValueError('Cannot find file:', file)
