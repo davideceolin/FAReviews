@@ -23,6 +23,7 @@ from sklearn.metrics import silhouette_score
 
 
 def load_model():
+    """Load the pre-trained word2vec model and stop words list."""
     stop_words = stopwords.words('english')
     model = gensim.models.KeyedVectors.load_word2vec_format(
                 'GoogleNews-vectors-negative300.bin.gz', binary=True)
@@ -31,12 +32,28 @@ def load_model():
 
 
 def get_matrix_and_clusters(prod, df, model, stop_words, k=-1):
+    """
+    Compute the distance matrix (wmdistance between all tokens of one product)
+    and clusters (kmeans cluster, clustering tokens based on the wm distance)
+    for a given product.
+
+    Args:
+        prod (str): The df with product asin.
+        df (pandas.DataFrame): The reviews dataframe.
+        model: The pre-trained word2vec model.
+        stop_words (list): List of stop words.
+
+    Returns:
+        tuple: A tuple (df_matrix, cluster_labels) containing the computed distance matrix and
+        cluster labels.
+    """
     # Get tokens
     t1 = ttime.time()
     k = [x for x in df.loc[df['asin'].str.match(prod), 'ranks']]
     tokens = [y[0].lower().split() for x in k for y in ast.literal_eval(str(x))]
     tokens = list(set([" ".join(filter(lambda y: y not in stop_words, x)) for x in tokens]))
     tokens = [x for x in tokens if x != "" and x != " "]
+
     # Create matrix with wmdistance values
     combis = list(itertools.combinations(tokens, 2))
     dists = list(itertools.starmap(model.wmdistance, combis))
@@ -46,6 +63,7 @@ def get_matrix_and_clusters(prod, df, model, stop_words, k=-1):
     data = data + data.T
     df_matrix = pd.DataFrame(data, index=tokens, columns=tokens)
     tm = ttime.time()
+
     # Calculate clusters
     silhouettes = []
     if not df_matrix.empty:
@@ -74,6 +92,19 @@ def get_matrix_and_clusters(prod, df, model, stop_words, k=-1):
 
 
 def add_features(df, ncores, df_reviews, model, stop_words):
+    """Apply get_matrix_and_clusters to the dataframe with all reviews (df_reviews), and add the
+    results to the columnsm 'matrix' and 'clusters' respectively in the product dataframe (df).
+
+    Args:
+        df (pandas.DataFrame): The dataframe with products
+        ncores (int): The number of cores to use.
+        df_reviews (pandas.DataFrame): The datframe with reviews.
+        model: The pre-trained word2vec model.
+        stop_words (list): List of stop words.
+
+    Returns:
+        df: The product dataframe with added features.
+    """
     if platform.system() != 'Darwin':
         psutil.Process().cpu_affinity([ncores])
     df['matrix'], df['clusters'] = zip(*df['prod'].apply(lambda x:
@@ -86,6 +117,15 @@ def add_features(df, ncores, df_reviews, model, stop_words):
 
 
 def parallelize_dataframe(df_to_par, func, n_cores=4):
+    """Parallelize a function across a DataFrame using multiprocessing.
+
+    Args:
+        df_to_par (pandas.DataFrame): The DataFrame to parallelize.
+        func: The function to apply to each chunk.
+        n_cores (int): The number of cores to use.
+
+    Returns:
+        df_res: The combined result df."""
     df_split = np.array_split(df_to_par, n_cores)
     pool = mp.Pool(n_cores)
     df_res = pd.concat(pool.starmap(func, zip(df_split, range(n_cores))))
@@ -95,6 +135,17 @@ def parallelize_dataframe(df_to_par, func, n_cores=4):
 
 
 def run_graph_creation(df_reviews, df_prods, nc):
+    """Calculate the matrices and clusters for each product using parallel processing.
+
+    Args:
+        df_reviews (pandas.DataFrame): DataFrame with all reviews.
+        df_prods (pandas.DataFrame): DataFrame with product data.
+        nc (int): Number of cores to use.
+
+    Returns:
+        df_prods_mc: product dataframe with added matrices and clusters.
+
+    """
     model, stop_words = load_model()
     add_features_df = partial(add_features, df_reviews=df_reviews,
                               model=model, stop_words=stop_words)

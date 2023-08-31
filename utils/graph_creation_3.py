@@ -21,6 +21,7 @@ stop_words = stopwords.words('english')
 
 
 def color_node(solution):
+    """Define the color of the node based on the given solution."""
     if solution == 'undec':
         return 'grey'
     elif solution == 'in':
@@ -55,12 +56,26 @@ def draw_graph(g, model, df, savename):
 
 
 def solve_argumentation_graph_json(g):
+    """Solve the argumentation graph using the prolog solver."""
     data = json_graph.node_link_data(g)
     r = requests.post('http://localhost:3333/argue', json=data)
     return r.json()
 
 
 def run_solver(prod, mc, df, savename, savefigs):
+    """
+    Run the solver on the given product.
+
+    Args:
+        prod (str): product asin.
+        mc (tuple): Tuple containing matrix and clusters for each product.
+        df (pandas.DataFrame): df with all reviews.
+        savename (str): Path to save the output.
+        savefigs (bool): flag to create save graphs.
+
+    Returns:
+        prod_reviews: df with per product the graph solution
+    """
     matrix = mc[0]
     cluster_prod = mc[1]
     # lists that will collect all tokens & info of one product
@@ -180,6 +195,18 @@ def run_solver(prod, mc, df, savename, savefigs):
 
 
 def parallelize_run_solver(p_run_solver, prods, mc_m, mc_c, n_cores):
+    """Parallelize the solver function across products using multiprocessing.
+
+    Args:
+        p_run_solver (function): Function to parallelize.
+        prods: List of products.
+        mc_m: List of matrices.
+        mc_c: List of clusters.
+        n_cores (int): Number of cores to use.
+
+    Returns:
+        df_results: df with graph resoluts.
+    """
     pool = mp.Pool(n_cores)
     mc = zip(mc_m, mc_c)
     df_results = pd.concat(pool.starmap(p_run_solver, zip(prods, mc)))
@@ -189,6 +216,19 @@ def parallelize_run_solver(p_run_solver, prods, mc_m, mc_c, n_cores):
 
 
 def run_graph_solver(df_prods, df_reviews, nc, savename, savefigs):
+    """
+    Solve the argumentation graphs.
+
+    Args:
+        df_prods (pandas.DataFrame): df with products.
+        df_reviews (pandas.DataFrame): df with all reviews.
+        nc (int): Number of cores to use.
+        savename (str): Path to save output.
+        savefigs (bool): flag to create save graphs.
+
+    Returns:
+        df_results: df with solved graohs per product, sorted by index.
+    """
     df_reviews['solutions'] = "undec"
     p_run_solver = partial(run_solver, df=df_reviews, savename=savename, savefigs=savefigs)
     prods = df_prods['prod'].to_list()
