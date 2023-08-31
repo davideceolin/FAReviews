@@ -49,6 +49,24 @@ def main():
 
 
 def run_compute_scores(infile, nc, cs, bs, trt, si, savename):
+    """Run the compute score function.
+
+    This function calls the run_compute function that calculates 
+
+    Args:
+        infile (str): Path to the input file
+        nc (int): Number of cores to use for computation.
+        cs (int): Chunk size used in compute scores.
+        bs (int): Batch size used in compute scores.
+        trt (float): Minimum textrank score threshold for the tokens to be used
+        si (bool): Flag indicating whether to save the computed results.
+        savename (str): Directory path to save the computed results (if si is True).
+
+    Returns:
+        tuple: A tuple containing two data structures:
+            - reviews (pandas.DataFrame): Processed review data.
+            - df_prods (pandas.DataFrame): Processed product data.
+    """
     print('Starting computing scores')
     reviews, df_prods = compute_scores(infile, nc, cs, bs, trt)
     if si:
