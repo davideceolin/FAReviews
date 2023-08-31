@@ -1,5 +1,6 @@
-## Description
-
+[![build](https://github.com/davideceolin/FAReviews/actions/workflows/build.yml/badge.svg)](https://github.com/davideceolin/FAReviews/actions/workflows/build.yml)
+[![markdown-link-check](https://github.com/davideceolin/FAReviews/actions/workflows/markdown-link-check.yml/badge.svg)](https://github.com/davideceolin/FAReviews/actions/workflows/markdown-link-check.yml)
+# FAReviews
 
 ## Prerequisites
 FAReviews uses [python3](https://www.python.org) for argumentation mining and [prolog](https://www.swi-prolog.org) for argument reasoning. The required prolog scripts can be found in the folder "argue".
