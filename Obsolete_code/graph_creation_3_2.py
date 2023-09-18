@@ -1,21 +1,21 @@
-import pandas as pd
-import time as ttime
-import networkx as nx
-from networkx.readwrite import json_graph
 import ast
+import itertools
 import math
-from nltk.corpus import stopwords
-import requests
+import multiprocessing as mp
+import os
+import time as ttime
+from functools import partial
+from operator import itemgetter
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from operator import itemgetter
+import networkx as nx
 import numpy as np
-import os
-import itertools
+import pandas as pd
 import psutil
-import multiprocessing as mp
-from functools import partial
-
+import requests
+from networkx.readwrite import json_graph
+from nltk.corpus import stopwords
 
 stop_words = stopwords.words('english')
 

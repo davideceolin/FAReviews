@@ -1,14 +1,15 @@
 # from sklearn.cluster import AgglomerativeClustering
 import gzip
 import json
+import os
+import sys
+
 import pandas as pd
 import spacy
+from spacy.language import Language
 # import neuralcoref
 # import pytextrank
 from spacy_readability import Readability
-import os
-import sys
-from spacy.language import Language
 
 nlp = spacy.load('en_core_web_md')
 # neuralcoref.add_to_pipe(nlp)

@@ -1,12 +1,14 @@
 # from sklearn.cluster import AgglomerativeClustering
 import gzip
 import json
+
+import matplotlib.pyplot as plt
 import pandas as pd
 # import networkx as nx
 # from spacy_readability import Readability
 # import numpy as np
 import seaborn as sns
-import matplotlib.pyplot as plt
+
 # from scipy import stats
 
 pd.set_option('display.max_rows', 500)

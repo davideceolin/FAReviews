@@ -7,6 +7,7 @@
 import ast
 import multiprocessing as mp
 import os
+import time as ttime
 from functools import partial
 
 import gensim
@@ -16,7 +17,6 @@ from nltk.corpus import stopwords
 from numpy import isinf, isnan
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
-import time as ttime
 
 stop_words = stopwords.words('english')
 model = gensim.models.KeyedVectors.load_word2vec_format(

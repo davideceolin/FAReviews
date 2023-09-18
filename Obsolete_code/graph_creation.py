@@ -4,30 +4,31 @@
 # 3. compute semantic similarity matrix per product!
 # 4. link
 
-# import networkx as nx
-# import duckdb
-import pandas as pd
+import ast
+import gzip
+import json
+# import sys
+import multiprocessing as mp
+# from tqdm import tqdm
+import os
+import traceback
+from functools import partial
+
 # import pickle
 # from time import time
 import gensim
+import numpy as np
+# import networkx as nx
+# import duckdb
+import pandas as pd
+import psutil
 # import logging
 from nltk.corpus import stopwords
+from numpy import isinf, isnan
 # from nltk import download
 from sklearn.cluster import KMeans
 # from sklearn.metrics import silhouette_samples
 from sklearn.metrics import silhouette_score
-from numpy import isnan, isinf
-# import sys
-import multiprocessing as mp
-import numpy as np
-from functools import partial
-import ast
-import psutil
-# from tqdm import tqdm
-import os
-import gzip
-import json
-import traceback
 
 
 def parse(path):

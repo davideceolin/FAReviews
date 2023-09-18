@@ -1,8 +1,9 @@
 # split data file into a number of separate files
-import pandas as pd
-import numpy as np
 import math
 import os
+
+import numpy as np
+import pandas as pd
 
 # review file to split
 file = './Data/AMAZON_FASHION.json.gz'

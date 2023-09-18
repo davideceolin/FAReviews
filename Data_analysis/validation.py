@@ -1,14 +1,14 @@
-from sklearn.cluster import KMeans
-# from sklearn.metrics import silhouette_samples, silhouette_score
-from sklearn.svm import SVC
-import pandas as pd
-import spacy
-from spacy_readability import Readability
-import pytextrank  # noqa: F401
 # from operator import itemgetter
 import numpy as np
+import pandas as pd
+import pytextrank  # noqa: F401
+import spacy
+from sklearn.cluster import KMeans
 from sklearn.model_selection import cross_val_score
+# from sklearn.metrics import silhouette_samples, silhouette_score
+from sklearn.svm import SVC
 from spacy.language import Language
+from spacy_readability import Readability
 
 nlp = spacy.load('en_core_web_md')
 

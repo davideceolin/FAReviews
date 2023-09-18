@@ -1,23 +1,24 @@
 # from compute_scores import Node
 # import pickle5 as pickle
 # import pickle
-import pandas as pd
-import networkx as nx
-from networkx.readwrite import json_graph
 import ast
+import math
+from operator import itemgetter
+
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
+import pandas as pd
+# import sys
+# import json
+import requests
+from networkx.readwrite import json_graph
+from nltk.corpus import stopwords
 # from pengines.Builder import PengineBuilder
 # from pengines.Pengine import Pengine
 # from prologterms import TermGenerator, PrologRenderer, Program, Var, Rule, Term, Const
 from prologterms import Const
-import math
-from nltk.corpus import stopwords
-# import sys
-# import json
-import requests
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-from operator import itemgetter
-import numpy as np
 
 # P = TermGenerator()
 # Model = Var('Model')
