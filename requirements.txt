@@ -4,8 +4,9 @@ spacy_readability>=1.4.1
 networkx>=2.8.0
 pandas>=1.4
 nltk>=3.7
-sklearn
+scikit-learn
 numpy>=1.23
 gensim>=4.0.0
 pengines>=0.1.8
 pyemd>=0.5
+psutil
