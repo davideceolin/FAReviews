@@ -182,7 +182,7 @@ def run_solver(prod, mc, df, savename, savefigs):
 def parallelize_run_solver(p_run_solver, prods, mc_m, mc_c, n_cores):
     pool = mp.Pool(n_cores)
     mc = zip(mc_m, mc_c)
-    df_results = pd.concat(pool.starmap(p_run_solver, zip(prods, mc)))
+    df_results = pd.concat(pool.starmap(p_run_solver, zip(prods, mc), chunksize=1))
     pool.close()
     pool.join()
     return df_results
