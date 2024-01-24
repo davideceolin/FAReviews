@@ -76,6 +76,8 @@ def run_solver(prod, mc, df, savename, savefigs):
     Returns:
         prod_reviews: df with per product the graph solution
     """
+    t1 = ttime.time()
+    tt1 = ttime.ctime()
     matrix = mc[0]
     cluster_prod = mc[1]
     # lists that will collect all tokens & info of one product
@@ -176,7 +178,9 @@ def run_solver(prod, mc, df, savename, savefigs):
                 else:
                     g.add_edge(review_id[j], review_id[i],
                                weight=weight + (w2 - w1) * sim_t1_t2)
+    t3= ttime.time()
     r = solve_argumentation_graph_json(g)
+    tgs = ttime.time() - t3
     if 'models' in r and len(r['models']) > 0:
         models = r['models']
         weights = [0 for x in r['models']]
@@ -191,6 +195,8 @@ def run_solver(prod, mc, df, savename, savefigs):
             prod_reviews.loc[prod_reviews['reviewerID'] == reviewer_id, 'solutions'] = node['state']
         if savefigs:
             draw_graph(g, model, prod_reviews, savename)
+    t2 = ttime.time() - t1
+    print(prod, len(tokens), tgs, t2-tgs, t2, tt1, ttime.ctime(), mp.current_process())
     return prod_reviews
 
 
@@ -209,7 +215,7 @@ def parallelize_run_solver(p_run_solver, prods, mc_m, mc_c, n_cores):
     """
     pool = mp.Pool(n_cores)
     mc = zip(mc_m, mc_c)
-    df_results = pd.concat(pool.starmap(p_run_solver, zip(prods, mc)))
+    df_results = pd.concat(pool.starmap(p_run_solver, zip(prods, mc), chunksize=1))
     pool.close()
     pool.join()
     return df_results

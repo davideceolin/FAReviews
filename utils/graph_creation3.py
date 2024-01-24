@@ -87,7 +87,7 @@ def get_matrix_and_clusters(prod, df, model, stop_words, k=-1):
     else:
         cluster_labels = []
     tc = ttime.time()
-    print(prod, len(tokens), tm-t1, tc-tm, tc-t1, mp.current_process())
+    print(prod, len(tokens), tm-t1, tc-tm, tc-t1, ttime.ctime(t1), mp.current_process())
     return df_matrix, cluster_labels
 
 
