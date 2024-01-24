@@ -1,9 +1,3 @@
-# TODO
-# 1. each review is a node
-# 2. extract arguments & weights
-# 3. compute semantic similarity matrix per product!
-# 4. link
-
 import ast
 import itertools
 import multiprocessing as mp
