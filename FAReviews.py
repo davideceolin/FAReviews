@@ -4,7 +4,7 @@ import time as ttime
 from argparse import RawTextHelpFormatter
 from datetime import datetime
 
-from utils.compute_scores2 import compute_scores
+from utils.compute_scores import compute_scores
 
 
 def main():
@@ -97,7 +97,7 @@ def run_graph(reviews, df_prods, num_cores, si, savename):
     Returns:
         pandas.DataFrame: Processed product data with added results from graph creation.
     """
-    from utils.graph_creation3 import run_graph_creation
+    from utils.graph_creation import run_graph_creation
     print('Start calculating matrices and clusters')
     tt = ttime.time()
     df_prods_mc = run_graph_creation(reviews, df_prods, num_cores)
@@ -128,7 +128,7 @@ def run_prolog_solver(df_prods_mc, reviews, nc, savename, savefigs, trt):
         savefigs (bool): Flag indicating whether to save the graph figures
         trt (float): Minimum textrank score threshold for the tokens to be used
     """
-    from utils.graph_creation_3 import run_graph_solver
+    from utils.graph_solver import run_graph_solver
     tt = ttime.time()
     print('Start solving graphs')
     df_results = run_graph_solver(df_prods_mc, reviews, nc, savename, savefigs)
