@@ -18,10 +18,12 @@ speed*
 # Folders
 ./o*/
 ./Da*/
-./data/
-./Data/*
+./data
+./Data
 ./__pycache__/
-./ras/*
+ras/
+./ras
+./ras/
 
 # Mac
 .DS_Store
