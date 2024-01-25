@@ -16,14 +16,11 @@ speed*
 *.csv
 
 # Folders
-./o*/
-./Da*/
-./data
-./Data
-./__pycache__/
-ras/
-./ras
-./ras/
+*/
+!utils/
+!argue
+!.github
+
 
 # Mac
 .DS_Store
