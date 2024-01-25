@@ -30,7 +30,7 @@ python -m nltk.downloader stopwords
 ### Argument Mining
 Perform feature extraction:
 ```bash
-python3 compute_scores2.py 
+python3 ./utils/compute_scores.py 
 ```
 The script will ask you to provide the number of jobs, chunks, batch size, textrank threshold, and folder for output. It creates in the output folder: 
 ```
@@ -40,7 +40,7 @@ The script will ask you to provide the number of jobs, chunks, batch size, textr
 
 Create the matrix with distance metrics:
 ```bash
-python3 graph_creation3.py 
+python3 ./utils/graph_creation.py 
 ```
 The script will ask you to provide the csv file with review data ([datafile name]_reviews.csv), the pkl file with the product list ([datafile name]_prods.pkl), the number of cores to use, and folder for output. It creates in the output folder:
 
@@ -59,7 +59,7 @@ swipl server.pl
 
 While the server is running, solve the Argumentation Graph. 
 ```bash
-python3 graph_creation_3.py 
+python3 ./utils/graph_solver.py 
 ```
 The script will ask you to provide the csv file with review data ([datafile name]_reviews.csv), the pkl file with the product list and matrices and clusters ([datafile name]_prods_mc.pkl), the number of cores to use, the folder to use for the output, and whether or not to save the figures of the created graphs to png. It creates in the output folder:
 ```
