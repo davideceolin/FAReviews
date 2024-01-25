@@ -21,7 +21,7 @@
     (one line)
 
         curl -X POST -H "Content-Type: application/json" \
-            -d @g01.json http://localhost:3333/argue
+            -d @g01.json http://localhost:3333/argue    <!-- markdown-link-check-disable-line -->
 
 The server can solve multiple models concurrently. Just make sure to run
 HTTP requests concurrently.
