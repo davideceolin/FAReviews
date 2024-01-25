@@ -10,11 +10,18 @@ AF*
 IS*
 LB*
 slurm*
+speed*
+*.sh
+*.whl
+*.csv
 
 # Folders
 ./o*
 ./Da*
 ./data
+./Data/*
+./__pycache__
+./ras*
 
 # Mac
 .DS_Store
