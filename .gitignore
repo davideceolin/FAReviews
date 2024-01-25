@@ -6,12 +6,15 @@ FAReviews_prods.pkl
 FAReviews_reviews.csv
 GoogleNews-vectors-negative300.bin.gz
 1_*
+AF*
+IS*
+LB*
+slurm*
 
 # Folders
-/*/
-!./Obsolete_code
-!./argue
-!./utils
+./o*
+./Da*
+./data
 
 # Mac
 .DS_Store
