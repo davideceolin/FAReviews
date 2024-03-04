@@ -16,6 +16,7 @@
 
         swipl server.pl
 	?- server(localhost:3333).
+  <!-- markdown-link-check-disable -->
   - To get the results, issue a POST request with the graph as JSON
     to http://localhost:3333/argue.  Using curl this is for example
     (one line)

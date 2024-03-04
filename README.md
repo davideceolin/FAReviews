@@ -1,5 +1,9 @@
-## Description
+[![github license badge](https://img.shields.io/github/license/davideceolin/FAReviews)](FAReviews)
+[![build](https://github.com/davideceolin/FAReviews/actions/workflows/build.yml/badge.svg)](https://github.com/davideceolin/FAReviews/actions/workflows/build.yml)
+[![fair-software.eu](https://img.shields.io/badge/fair--software.eu-%E2%97%8F%20%20%E2%97%8B%20%20%E2%97%8B%20%20%E2%97%8B%20%20%E2%97%8B-red)](https://fair-software.eu)
+[![markdown-link-check](https://github.com/davideceolin/FAReviews/actions/workflows/markdown-link-check.yml/badge.svg)](https://github.com/davideceolin/FAReviews/actions/workflows/markdown-link-check.yml)
 
+# FAReviews
 
 ## Prerequisites
 FAReviews uses [python3](https://www.python.org) for argumentation mining and [prolog](https://www.swi-prolog.org) for argument reasoning. The required prolog scripts can be found in the folder "argue".
@@ -87,7 +91,6 @@ python3 FAReviews.py -f Data/mydata.csv -nc 4 -cs 50 -bs 40 -trt 0.10 -sn MyOutp
 ```
 
 The script will output the final results of graph_creation_3 (and intermediate results/graphs if respective arguments are set), and will print which part it is currently working on and how long the finished parts have taken to complete. **Note that if you use the textrank threshold, tokens with a textrank score below the threshold are not used and therefore not saved in any of the output files.**
-
 
 
 ## Contributing
