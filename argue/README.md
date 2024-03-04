@@ -16,12 +16,13 @@
 
         swipl server.pl
 	?- server(localhost:3333).
+  <!-- markdown-link-check-disable -->
   - To get the results, issue a POST request with the graph as JSON
     to http://localhost:3333/argue.  Using curl this is for example
     (one line)
 
         curl -X POST -H "Content-Type: application/json" \
             -d @g01.json http://localhost:3333/argue
-
+<!-- markdown-link-check-enable -->
 The server can solve multiple models concurrently. Just make sure to run
 HTTP requests concurrently.
