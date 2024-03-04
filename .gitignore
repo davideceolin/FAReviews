@@ -6,13 +6,25 @@ FAReviews_prods.pkl
 FAReviews_reviews.csv
 GoogleNews-vectors-negative300.bin.gz
 1_*
+AF*
+IS*
+LB*
+slurm*
+speed*
+*.sh
+*.whl
+*.csv
 
 # Folders
-Data*
-Output*
+*/
+!utils/
+!argue
+!.github
+
 
 # Mac
 .DS_Store
 
 # Performance tests
+test*
 *.lprof

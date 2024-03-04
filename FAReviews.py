@@ -4,7 +4,7 @@ import time as ttime
 from argparse import RawTextHelpFormatter
 from datetime import datetime
 
-from compute_scores2 import compute_scores
+from utils.compute_scores import compute_scores
 
 
 def main():
@@ -49,6 +49,26 @@ def main():
 
 
 def run_compute_scores(infile, nc, cs, bs, trt, si, savename):
+    """Run the compute score function.
+
+    This function calls the run_compute function that calculates 
+
+    Args:
+        infile (str): Path to the input file
+        nc (int): Number of cores to use for computation.
+        cs (int): Chunk size used in compute scores.
+        bs (int): Batch size used in compute scores.
+        trt (float): Minimum textrank score threshold for the tokens to be used
+        si (bool): Flag indicating whether to save the computed results.
+        savename (str): Path to save the computed results (if si is True).
+
+    Returns:
+        tuple: A tuple containing two data structures:
+            - reviews (pandas.DataFrame): Processed review data: for each review the
+            calculated readability score and extracted text tokens
+            (on which a trt selecting is applied) is determined.
+            - df_prods (pandas.DataFrame): total number of tokens per product
+    """
     print('Starting computing scores')
     reviews, df_prods = compute_scores(infile, nc, cs, bs, trt)
     if si:
@@ -64,7 +84,20 @@ def run_compute_scores(infile, nc, cs, bs, trt, si, savename):
 
 
 def run_graph(reviews, df_prods, num_cores, si, savename):
-    from graph_creation3 import run_graph_creation
+    """
+    Run the process to calculate matrices, clusters, and perform graph creation.
+
+    Args:
+        reviews (pandas.DataFrame): Processed review data.
+        df_prods (pandas.DataFrame): Processed product data.
+        num_cores (int): Number of cores to use for computation.
+        si (bool): Flag indicating whether to save the computed results.
+        savename (str): Path to save the graph creation results (if si is True).
+
+    Returns:
+        pandas.DataFrame: Processed product data with added results from graph creation.
+    """
+    from utils.graph_creation import run_graph_creation
     print('Start calculating matrices and clusters')
     tt = ttime.time()
     df_prods_mc = run_graph_creation(reviews, df_prods, num_cores)
@@ -81,11 +114,24 @@ def run_graph(reviews, df_prods, num_cores, si, savename):
 
 
 def run_prolog_solver(df_prods_mc, reviews, nc, savename, savefigs, trt):
-    import graph_creation_3
+    """
+    Run the Prolog graph solver on processed data.
+
+    This function takes the processed product and review data (process by compute scores and graph creation),
+    and runs the graph_creation_3 script to solve the graphs.
+
+    Args:
+        df_prods_mc (pandas.DataFrame): Processed product data with graph information.
+        reviews (pandas.DataFrame): Processed review data (from compute scores).
+        nc (int): Number of cores to use for computation.
+        savename (str): Path to save the solver results.
+        savefigs (bool): Flag indicating whether to save the graph figures
+        trt (float): Minimum textrank score threshold for the tokens to be used
+    """
+    from utils.graph_solver import run_graph_solver
     tt = ttime.time()
     print('Start solving graphs')
-    df_results = graph_creation_3.run_graph_solver(df_prods_mc, reviews, nc,
-                                                   savename, savefigs)
+    df_results = run_graph_solver(df_prods_mc, reviews, nc, savename, savefigs)
     # add trt to output savename
     try:
         bn = os.path.basename(file)
